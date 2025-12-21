@@ -40,7 +40,7 @@ void SnapClientComponent::setup() {
 #endif
   if (this->mute_pin_ != nullptr) {
     this->mute_pin_->setup();
-    this->mute_pin_->digital_write(true);
+    this->mute_pin_->digital_write(false);
   }
 
   init_snapcast(this->audio_q_hdl_, this->name_.c_str(), this->host_.c_str(), this->port_);
@@ -74,7 +74,7 @@ void SnapClientComponent::loop() {
   if (xQueueReceive(this->audio_q_hdl_, &dac_data, 0) == pdTRUE) {
     if (dac_data.mute != dac_data_old.mute) {
       if (this->mute_pin_ != nullptr) {
-        this->mute_pin_->digital_write(dac_data.mute);
+        this->mute_pin_->digital_write(!dac_data.mute);  // for most DACs mute = low
       }
 #ifdef USE_AUDIO_DAC
       if (this->audio_dac_) {
