@@ -516,6 +516,8 @@ void http_get_task(void *pvParameters) {
 
       ESP_LOGW(TAG, "No IP found in MDNS query");
 
+      // Add delay before retry to prevent spamming when network is not ready
+      vTaskDelay(pdMS_TO_TICKS(1000));
       continue;
     }
 #else
@@ -549,6 +551,8 @@ void http_get_task(void *pvParameters) {
     if (lwipNetconn == NULL) {
       ESP_LOGE(TAG, "can't create netconn");
 
+      // Add delay before retry to prevent spamming when network is not ready
+      vTaskDelay(pdMS_TO_TICKS(1000));
       continue;
     }
 
@@ -567,6 +571,8 @@ void http_get_task(void *pvParameters) {
       netconn_delete(lwipNetconn);
       lwipNetconn = NULL;
 
+      // Add delay before retry to prevent spamming when network is not ready
+      vTaskDelay(pdMS_TO_TICKS(1000));
       continue;
     }
 
