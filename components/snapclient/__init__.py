@@ -22,7 +22,7 @@ CONF_AUDIO_DAC = "audio_dac"
 CONF_MUTE_PIN = "mute_pin"
 CONF_WEBSERVER_PORT = "webserver_port"
 
-SNAPCLIENT_GIT_VERSION = "1adc5245012160c3c4eb312c962c7dc18b17231e"
+SNAPCLIENT_GIT_VERSION = "d3b9c3b701016035c11228d4fd22b5047590044d"  # Feb 6 ESP_PM_NO_LIGHT_SLEEP fix
 
 snapclient_ns = cg.esphome_ns.namespace("snapclient")
 SnapClientComponent = snapclient_ns.class_(
