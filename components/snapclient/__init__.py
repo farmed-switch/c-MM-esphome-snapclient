@@ -75,6 +75,12 @@ async def to_code(config):
         path="components/libmedian",
     )
     add_idf_component(
+        name="timefilter",
+        ref=SNAPCLIENT_GIT_VERSION,
+        repo="https://github.com/CarlosDerSeher/snapclient.git",
+        path="components/timefilter",
+    )
+    add_idf_component(
         name="opus",
         ref=SNAPCLIENT_GIT_VERSION,
         repo="https://github.com/CarlosDerSeher/snapclient.git",
