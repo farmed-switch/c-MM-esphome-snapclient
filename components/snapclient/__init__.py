@@ -22,7 +22,7 @@ CONF_AUDIO_DAC = "audio_dac"
 CONF_MUTE_PIN = "mute_pin"
 CONF_WEBSERVER_PORT = "webserver_port"
 
-SNAPCLIENT_GIT_VERSION = "01d8840a492d25ac8128a5e3df6653b36ae67791"  # Nov 1: Power management + latency buffer fix
+SNAPCLIENT_GIT_VERSION = "1adc5245012160c3c4eb312c962c7dc18b17231e"  # Aug 30: Last version with old API
 
 snapclient_ns = cg.esphome_ns.namespace("snapclient")
 SnapClientComponent = snapclient_ns.class_(
