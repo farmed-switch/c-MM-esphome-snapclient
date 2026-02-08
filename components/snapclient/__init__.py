@@ -22,7 +22,7 @@ CONF_AUDIO_DAC = "audio_dac"
 CONF_MUTE_PIN = "mute_pin"
 CONF_WEBSERVER_PORT = "webserver_port"
 
-SNAPCLIENT_GIT_VERSION = "develop"  # Feb 6, 2026 fix for HARD RESYNC
+SNAPCLIENT_GIT_VERSION = "develop"
 
 snapclient_ns = cg.esphome_ns.namespace("snapclient")
 SnapClientComponent = snapclient_ns.class_(
@@ -75,6 +75,12 @@ async def to_code(config):
         path="components/libmedian",
     )
     add_idf_component(
+        name="timefilter",
+        ref=SNAPCLIENT_GIT_VERSION,
+        repo="https://github.com/CarlosDerSeher/snapclient.git",
+        path="components/timefilter",
+    )
+    add_idf_component(
         name="opus",
         ref=SNAPCLIENT_GIT_VERSION,
         repo="https://github.com/CarlosDerSeher/snapclient.git",
@@ -92,8 +98,20 @@ async def to_code(config):
         repo="https://github.com/CarlosDerSeher/snapclient.git",
         path="components/dsp_processor",
     )
+    add_idf_component(
+        name="dsp_processor_settings",
+        ref=SNAPCLIENT_GIT_VERSION,
+        repo="https://github.com/CarlosDerSeher/snapclient.git",
+        path="components/dsp_processor_settings",
+    )
     if CONF_WEBSERVER_PORT in config:
         cg.add_build_flag(f"-DCONFIG_WEB_PORT={config[CONF_WEBSERVER_PORT]}")
+        add_idf_component(
+            name="settings_manager",
+            ref=SNAPCLIENT_GIT_VERSION,
+            repo="https://github.com/CarlosDerSeher/snapclient.git",
+            path="components/settings_manager",
+        )
         add_idf_component(
             name="ui_http_server",
             ref=SNAPCLIENT_GIT_VERSION,
