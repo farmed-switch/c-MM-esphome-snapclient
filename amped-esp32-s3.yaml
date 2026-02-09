@@ -15,7 +15,15 @@ esphome:
     then:
       - lambda: |-
           esp_netif_set_hostname(esp_netif_get_handle_from_ifkey("WIFI_STA_DEF"), "${name}");
-      - delay: 30s  # Wait for NTP sync
+      - logger.log: "Waiting 30s for NTP sync before starting snapclient..."
+      - delay: 30s
+      - lambda: |-
+          auto time = id(sntp_time).now();
+          if (time.is_valid()) {
+            ESP_LOGI("boot", "NTP synced");
+          } else {
+            ESP_LOGW("boot", "NTP not synced yet, but continuing...");
+          }
       - switch.turn_on: enable_dac
       
 esp32:
@@ -26,14 +34,17 @@ esp32:
   framework:
     type: esp-idf
     version: recommended
+    log_level: info
     sdkconfig_options:
       CONFIG_BT_ALLOCATION_FROM_SPIRAM_FIRST: "y"
       CONFIG_BT_BLE_DYNAMIC_ENV_MEMORY: "y"
       CONFIG_MBEDTLS_EXTERNAL_MEM_ALLOC: "y"
       CONFIG_MBEDTLS_SSL_PROTO_TLS1_3: "y"
+      CONFIG_SNAPCLIENT_DSP_FLOW_STEREO: "n"
       CONFIG_SNAPCLIENT_DSP_FLOW_BASS_TREBLE_EQ: "n"
       CONFIG_USE_DSP_PROCESSOR: "y"
       CONFIG_DSP_OPTIMIZED: "y"
+      CONFIG_DSP_MAX_FFT_SIZE: "4096"
 
 logger:
   level: DEBUG
@@ -47,22 +58,40 @@ wifi:
   power_save_mode: none  # Critical for audio performance
   output_power: 20dB
 
+web_server:
+  port: 80
+  version: 3
+
 ota:
   - platform: esphome
     password: !secret ota_password
 
-web_server:
-  port: 80
-
 api:
+
+safe_mode:
+  disabled: true
+
+mdns:
 
 psram:
   mode: octal
   speed: 80MHz
+  ignore_not_found: false
+
+network:
+  enable_ipv6: true
 
 time:
   - platform: sntp
     id: sntp_time
+    timezone: "CET-1CEST,M3.5.0,M10.5.0/3"
+    servers:
+      - 0.pool.ntp.org
+      - 1.pool.ntp.org
+    update_interval: 6h
+    on_time_sync:
+      then:
+        - logger.log: "Time synchronized with NTP!"
 
 external_components:
   - source: github://farmed-switch/c-MM-esphome-snapclient@main
@@ -81,14 +110,17 @@ snapclient:
 
 switch:
   - platform: gpio
-    name: "Enable DAC"
+    icon: "mdi:speaker"
+    name: Enable DAC
     id: enable_dac
-    pin: GPIO17
+    pin:
+      number: GPIO17
     restore_mode: ALWAYS_OFF
   
   - platform: template
-    name: "EQ Enable"
+    name: "${friendly_name} EQ Enable"
     id: eq_enable
+    icon: mdi:equalizer
     optimistic: true
     restore_mode: RESTORE_DEFAULT_ON
     on_turn_on:
@@ -100,25 +132,81 @@ switch:
           extern void enable_eq(bool enable);
           enable_eq(false);
 
+button:
+  - platform: restart
+    id: restart_btn
+    name: "${friendly_name} REBOOT"
+
 sensor:
   - platform: wifi_signal
-    name: "WiFi Signal"
+    name: "${friendly_name} WiFi Signal"
+    update_interval: 60s
+  - platform: uptime
+    name: "${friendly_name} Uptime"
+    update_interval: 60s
   - platform: internal_temperature
-    name: "CPU Temperature"
+    name: "${friendly_name} CPU Temperature"
+    update_interval: 60s
+  - platform: template
+    name: "${friendly_name} Free Heap"
+    lambda: |-
+      return heap_caps_get_free_size(MALLOC_CAP_INTERNAL) / 1024.0;
+    unit_of_measurement: 'kB'
+    update_interval: 10s
+  - platform: template
+    name: "${friendly_name} Free PSRAM"
+    lambda: |-
+      return heap_caps_get_free_size(MALLOC_CAP_SPIRAM) / 1024.0;
+    unit_of_measurement: 'kB'
+    update_interval: 10s
   - platform: debug
     loop_time:
-      name: "Loop Time"
+      name: "${friendly_name} Loop Time"
 
-# 18-band EQ: 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 200, 315, 500, 800, 1250, 2000, 5000 Hz
+text_sensor:
+  - platform: wifi_info
+    ip_address:
+      name: "${friendly_name} IP"
+    mac_address:
+      name: "${friendly_name} MAC"
+  - platform: version
+    name: "${friendly_name} ESPHome Version"
+  - platform: template
+    name: "${friendly_name} Time"
+    lambda: |-
+      auto time = id(sntp_time).now();
+      if (!time.is_valid()) {
+        return {"Syncing..."};
+      }
+      char buf[20];
+      snprintf(buf, sizeof(buf), "%04d-%02d-%02d %02d:%02d:%02d",
+        time.year, time.month, time.day_of_month,
+        time.hour, time.minute, time.second);
+      return {buf};
+    update_interval: 60s
+
+binary_sensor:
+  - platform: status
+    name: "${friendly_name} Status"
+
+# ==================== GRAPHIC EQUALIZER ====================
+# 18-band parametric EQ using ESP-DSP biquad filters
+# Frequencies: 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 200, 315, 500, 800, 1250, 2000, 5000 Hz
+# Range: -15dB to +15dB, Q=1.0 (moderate bandwidth)
+# Default: Flat (0dB) on all bands
+
 number:
   - platform: template
-    name: "EQ 0040Hz"
+    name: "${friendly_name} EQ 0040Hz"
     id: eq_40hz
+    icon: mdi:equalizer
+    optimistic: true
     min_value: -15
     max_value: 15
     step: 1
     initial_value: 0
     unit_of_measurement: "dB"
+    mode: slider
     restore_value: true
     on_value:
       - lambda: |-
@@ -126,13 +214,16 @@ number:
           set_eq_band(0, x);
   
   - platform: template
-    name: "EQ 0050Hz"
+    name: "${friendly_name} EQ 0050Hz"
     id: eq_50hz
+    icon: mdi:equalizer
+    optimistic: true
     min_value: -15
     max_value: 15
     step: 1
     initial_value: 0
     unit_of_measurement: "dB"
+    mode: slider
     restore_value: true
     on_value:
       - lambda: |-
@@ -140,13 +231,16 @@ number:
           set_eq_band(1, x);
   
   - platform: template
-    name: "EQ 0060Hz"
+    name: "${friendly_name} EQ 0060Hz"
     id: eq_60hz
+    icon: mdi:equalizer
+    optimistic: true
     min_value: -15
     max_value: 15
     step: 1
     initial_value: 0
     unit_of_measurement: "dB"
+    mode: slider
     restore_value: true
     on_value:
       - lambda: |-
@@ -154,13 +248,16 @@ number:
           set_eq_band(2, x);
   
   - platform: template
-    name: "EQ 0070Hz"
+    name: "${friendly_name} EQ 0070Hz"
     id: eq_70hz
+    icon: mdi:equalizer
+    optimistic: true
     min_value: -15
     max_value: 15
     step: 1
     initial_value: 0
     unit_of_measurement: "dB"
+    mode: slider
     restore_value: true
     on_value:
       - lambda: |-
@@ -168,13 +265,16 @@ number:
           set_eq_band(3, x);
   
   - platform: template
-    name: "EQ 0080Hz"
+    name: "${friendly_name} EQ 0080Hz"
     id: eq_80hz
+    icon: mdi:equalizer
+    optimistic: true
     min_value: -15
     max_value: 15
     step: 1
     initial_value: 0
     unit_of_measurement: "dB"
+    mode: slider
     restore_value: true
     on_value:
       - lambda: |-
@@ -182,13 +282,16 @@ number:
           set_eq_band(4, x);
   
   - platform: template
-    name: "EQ 0090Hz"
+    name: "${friendly_name} EQ 0090Hz"
     id: eq_90hz
+    icon: mdi:equalizer
+    optimistic: true
     min_value: -15
     max_value: 15
     step: 1
     initial_value: 0
     unit_of_measurement: "dB"
+    mode: slider
     restore_value: true
     on_value:
       - lambda: |-
@@ -196,13 +299,16 @@ number:
           set_eq_band(5, x);
   
   - platform: template
-    name: "EQ 0100Hz"
+    name: "${friendly_name} EQ 0100Hz"
     id: eq_100hz
+    icon: mdi:equalizer
+    optimistic: true
     min_value: -15
     max_value: 15
     step: 1
     initial_value: 0
     unit_of_measurement: "dB"
+    mode: slider
     restore_value: true
     on_value:
       - lambda: |-
@@ -210,13 +316,16 @@ number:
           set_eq_band(6, x);
   
   - platform: template
-    name: "EQ 0110Hz"
+    name: "${friendly_name} EQ 0110Hz"
     id: eq_110hz
+    icon: mdi:equalizer
+    optimistic: true
     min_value: -15
     max_value: 15
     step: 1
     initial_value: 0
     unit_of_measurement: "dB"
+    mode: slider
     restore_value: true
     on_value:
       - lambda: |-
@@ -224,13 +333,16 @@ number:
           set_eq_band(7, x);
   
   - platform: template
-    name: "EQ 0120Hz"
+    name: "${friendly_name} EQ 0120Hz"
     id: eq_120hz
+    icon: mdi:equalizer
+    optimistic: true
     min_value: -15
     max_value: 15
     step: 1
     initial_value: 0
     unit_of_measurement: "dB"
+    mode: slider
     restore_value: true
     on_value:
       - lambda: |-
@@ -238,13 +350,16 @@ number:
           set_eq_band(8, x);
   
   - platform: template
-    name: "EQ 0130Hz"
+    name: "${friendly_name} EQ 0130Hz"
     id: eq_130hz
+    icon: mdi:equalizer
+    optimistic: true
     min_value: -15
     max_value: 15
     step: 1
     initial_value: 0
     unit_of_measurement: "dB"
+    mode: slider
     restore_value: true
     on_value:
       - lambda: |-
@@ -252,13 +367,16 @@ number:
           set_eq_band(9, x);
   
   - platform: template
-    name: "EQ 0140Hz"
+    name: "${friendly_name} EQ 0140Hz"
     id: eq_140hz
+    icon: mdi:equalizer
+    optimistic: true
     min_value: -15
     max_value: 15
     step: 1
     initial_value: 0
     unit_of_measurement: "dB"
+    mode: slider
     restore_value: true
     on_value:
       - lambda: |-
@@ -266,13 +384,16 @@ number:
           set_eq_band(10, x);
   
   - platform: template
-    name: "EQ 0200Hz"
+    name: "${friendly_name} EQ 0200Hz"
     id: eq_200hz
+    icon: mdi:equalizer
+    optimistic: true
     min_value: -15
     max_value: 15
     step: 1
     initial_value: 0
     unit_of_measurement: "dB"
+    mode: slider
     restore_value: true
     on_value:
       - lambda: |-
@@ -280,13 +401,16 @@ number:
           set_eq_band(11, x);
   
   - platform: template
-    name: "EQ 0315Hz"
+    name: "${friendly_name} EQ 0315Hz"
     id: eq_315hz
+    icon: mdi:equalizer
+    optimistic: true
     min_value: -15
     max_value: 15
     step: 1
     initial_value: 0
     unit_of_measurement: "dB"
+    mode: slider
     restore_value: true
     on_value:
       - lambda: |-
@@ -294,13 +418,16 @@ number:
           set_eq_band(12, x);
   
   - platform: template
-    name: "EQ 0500Hz"
+    name: "${friendly_name} EQ 0500Hz"
     id: eq_500hz
+    icon: mdi:equalizer
+    optimistic: true
     min_value: -15
     max_value: 15
     step: 1
     initial_value: 0
     unit_of_measurement: "dB"
+    mode: slider
     restore_value: true
     on_value:
       - lambda: |-
@@ -308,13 +435,16 @@ number:
           set_eq_band(13, x);
   
   - platform: template
-    name: "EQ 0800Hz"
+    name: "${friendly_name} EQ 0800Hz"
     id: eq_800hz
+    icon: mdi:equalizer
+    optimistic: true
     min_value: -15
     max_value: 15
     step: 1
     initial_value: 0
     unit_of_measurement: "dB"
+    mode: slider
     restore_value: true
     on_value:
       - lambda: |-
@@ -322,13 +452,16 @@ number:
           set_eq_band(14, x);
   
   - platform: template
-    name: "EQ 1250Hz"
+    name: "${friendly_name} EQ 1250Hz"
     id: eq_1250hz
+    icon: mdi:equalizer
+    optimistic: true
     min_value: -15
     max_value: 15
     step: 1
     initial_value: 0
     unit_of_measurement: "dB"
+    mode: slider
     restore_value: true
     on_value:
       - lambda: |-
@@ -336,13 +469,16 @@ number:
           set_eq_band(15, x);
   
   - platform: template
-    name: "EQ 2000Hz"
+    name: "${friendly_name} EQ 2000Hz"
     id: eq_2000hz
+    icon: mdi:equalizer
+    optimistic: true
     min_value: -15
     max_value: 15
     step: 1
     initial_value: 0
     unit_of_measurement: "dB"
+    mode: slider
     restore_value: true
     on_value:
       - lambda: |-
@@ -350,13 +486,16 @@ number:
           set_eq_band(16, x);
   
   - platform: template
-    name: "EQ 5000Hz"
+    name: "${friendly_name} EQ 5000Hz"
     id: eq_5000hz
+    icon: mdi:equalizer
+    optimistic: true
     min_value: -15
     max_value: 15
     step: 1
     initial_value: 0
     unit_of_measurement: "dB"
+    mode: slider
     restore_value: true
     on_value:
       - lambda: |-
@@ -365,8 +504,9 @@ number:
 
 select:
   - platform: template
-    name: "EQ Preset"
+    name: "${friendly_name} EQ Preset"
     id: eq_preset
+    icon: mdi:tune-vertical
     optimistic: true
     options:
       - "Flat (Bypass)"
