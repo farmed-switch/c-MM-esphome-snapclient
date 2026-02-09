@@ -26,16 +26,10 @@ typedef struct {
     uint32_t sample_rate;             // Sample rate (e.g., 44100)
 } graphic_eq_t;
 
-// Global EQ instance
-static graphic_eq_t eq = {
-    .center_freq = {50, 80, 125, 200, 315, 500, 800, 1250, 2000, 5000},
-    .q_factor = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0},
-    .gain_db = {6, 4, 2, -1, -3, -1, 0, -2, 0, 3},  // Subwoofer Boost preset
-    .enabled = true,
-    .sample_rate = 44100
-};
+// Global EQ instance (defined in decoder.cpp)
+extern graphic_eq_t eq;
 
-static const char* EQ_TAG = "GraphicEQ";
+#define EQ_TAG "GraphicEQ"
 
 /**
  * Initialize the graphic equalizer

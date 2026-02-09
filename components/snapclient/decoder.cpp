@@ -29,6 +29,15 @@
 // Graphic Equalizer (10-band parametric EQ)
 #include "graphic_eq.h"
 
+// EQ global instance definition
+graphic_eq_t eq = {
+    .center_freq = {50, 80, 125, 200, 315, 500, 800, 1250, 2000, 5000},
+    .q_factor = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0},
+    .gain_db = {6, 4, 2, -1, -3, -1, 0, -2, 0, 3},  // Subwoofer Boost preset
+    .enabled = true,
+    .sample_rate = 44100
+};
+
 // Opus decoder is implemented as a subcomponet from master git repo
 #include "opus.h"
 
