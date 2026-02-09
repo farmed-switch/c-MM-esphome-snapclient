@@ -26,14 +26,14 @@
 #include "dsp_processor.h"
 #endif
 
-// Graphic Equalizer (10-band parametric EQ)
+// Graphic Equalizer (18-band parametric EQ)
 #include "graphic_eq.h"
 
 // EQ global instance definition
 graphic_eq_t eq = {
-    .center_freq = {50, 80, 125, 200, 315, 500, 800, 1250, 2000, 5000},
-    .q_factor = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0},
-    .gain_db = {6, 4, 2, -1, -3, -1, 0, -2, 0, 3},  // Subwoofer Boost preset
+    .center_freq = {40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 200, 315, 500, 800, 1250, 2000, 5000},
+    .q_factor = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0},
+    .gain_db = {8, 7, 6, 5, 4, 3, 2, 1, 0, -1, -2, -2, -3, -1, 0, -1, -2, 2},  // Subwoofer Boost preset
     .enabled = true,
     .sample_rate = 44100
 };

@@ -11,8 +11,8 @@
 #define M_PI 3.14159265358979323846
 #endif
 
-// 10-band graphic equalizer
-#define EQ_BANDS 10
+// 18-band graphic equalizer (11 bass bands 40-140Hz + 7 higher bands)
+#define EQ_BANDS 18
 
 // EQ configuration
 typedef struct {
@@ -37,7 +37,7 @@ extern graphic_eq_t eq;
  */
 inline void eq_init(uint32_t sample_rate) {
     eq.sample_rate = sample_rate;
-    ESP_LOGI(EQ_TAG, "Initializing 10-band graphic EQ @ %lu Hz", sample_rate);
+    ESP_LOGI(EQ_TAG, "Initializing 18-band graphic EQ @ %lu Hz", sample_rate);
     
     // Clear all delay lines
     memset(eq.delay_left, 0, sizeof(eq.delay_left));
@@ -176,16 +176,26 @@ extern "C" inline void apply_eq_preset(const char* preset) {
         
     } else if (strcmp(preset, "Subwoofer Boost") == 0) {
         // Bass boost, mid cut, treble boost (for subwoofer)
-        eq.gain_db[0] = 6;   // 50Hz
-        eq.gain_db[1] = 4;   // 80Hz
-        eq.gain_db[2] = 2;   // 125Hz
-        eq.gain_db[3] = -1;  // 200Hz
-        eq.gain_db[4] = -3;  // 315Hz
-        eq.gain_db[5] = -1;  // 500Hz
-        eq.gain_db[6] = 0;   // 800Hz
-        eq.gain_db[7] = -2;  // 1250Hz
-        eq.gain_db[8] = 0;   // 2000Hz
-        eq.gain_db[9] = 3;   // 5000Hz
+        // 40-140Hz bass bands (10Hz steps)
+        eq.gain_db[0] = 8;    // 40Hz
+        eq.gain_db[1] = 7;    // 50Hz
+        eq.gain_db[2] = 6;    // 60Hz
+        eq.gain_db[3] = 5;    // 70Hz
+        eq.gain_db[4] = 4;    // 80Hz
+        eq.gain_db[5] = 3;    // 90Hz
+        eq.gain_db[6] = 2;    // 100Hz
+        eq.gain_db[7] = 1;    // 110Hz
+        eq.gain_db[8] = 0;    // 120Hz
+        eq.gain_db[9] = -1;   // 130Hz
+        eq.gain_db[10] = -2;  // 140Hz
+        // Higher frequency bands
+        eq.gain_db[11] = -2;  // 200Hz
+        eq.gain_db[12] = -3;  // 315Hz
+        eq.gain_db[13] = -1;  // 500Hz
+        eq.gain_db[14] = 0;   // 800Hz
+        eq.gain_db[15] = -1;  // 1250Hz
+        eq.gain_db[16] = -2;  // 2000Hz
+        eq.gain_db[17] = 2;   // 5000Hz
         eq.enabled = true;
         
     } else if (strcmp(preset, "Custom") == 0) {
