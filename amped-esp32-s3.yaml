@@ -1,0 +1,502 @@
+substitutions:
+  name: snapcast-client
+  friendly_name: Snapcast Client
+  task_stack_in_psram: "true"  # MUST be true for ESP32-S3
+
+esphome:
+  name: ${name}
+  friendly_name: ${friendly_name}
+  min_version: 2025.7.0
+  name_add_mac_suffix: false
+  platformio_options:
+    board_build.flash_mode: dio
+  on_boot: 
+    priority: 600
+    then:
+      - lambda: |-
+          esp_netif_set_hostname(esp_netif_get_handle_from_ifkey("WIFI_STA_DEF"), "${name}");
+      - delay: 30s  # Wait for NTP sync
+      - switch.turn_on: enable_dac
+      
+esp32:
+  board: esp32-s3-devkitc-1
+  variant: ESP32S3
+  flash_size: 8MB
+  cpu_frequency: 240MHz
+  framework:
+    type: esp-idf
+    version: recommended
+    sdkconfig_options:
+      CONFIG_BT_ALLOCATION_FROM_SPIRAM_FIRST: "y"
+      CONFIG_BT_BLE_DYNAMIC_ENV_MEMORY: "y"
+      CONFIG_MBEDTLS_EXTERNAL_MEM_ALLOC: "y"
+      CONFIG_MBEDTLS_SSL_PROTO_TLS1_3: "y"
+      CONFIG_SNAPCLIENT_DSP_FLOW_BASS_TREBLE_EQ: "n"
+      CONFIG_USE_DSP_PROCESSOR: "y"
+      CONFIG_DSP_OPTIMIZED: "y"
+
+logger:
+  level: DEBUG
+
+debug:
+  update_interval: 5s
+  
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  power_save_mode: none  # Critical for audio performance
+  output_power: 20dB
+
+ota:
+  - platform: esphome
+    password: !secret ota_password
+
+web_server:
+  port: 80
+
+api:
+
+psram:
+  mode: octal
+  speed: 80MHz
+
+time:
+  - platform: sntp
+    id: sntp_time
+
+external_components:
+  - source: github://farmed-switch/c-MM-esphome-snapclient@main
+    components: [ snapclient ]
+    refresh: 0s
+
+i2s_audio:
+  i2s_lrclk_pin: GPIO15
+  i2s_bclk_pin: GPIO14
+
+snapclient:
+  hostname: !secret snapserver_ip
+  port: 1704
+  name: ${friendly_name}
+  i2s_dout_pin: GPIO16
+
+switch:
+  - platform: gpio
+    name: "Enable DAC"
+    id: enable_dac
+    pin: GPIO17
+    restore_mode: ALWAYS_OFF
+  
+  - platform: template
+    name: "EQ Enable"
+    id: eq_enable
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+    on_turn_on:
+      - lambda: |-
+          extern void enable_eq(bool enable);
+          enable_eq(true);
+    on_turn_off:
+      - lambda: |-
+          extern void enable_eq(bool enable);
+          enable_eq(false);
+
+sensor:
+  - platform: wifi_signal
+    name: "WiFi Signal"
+  - platform: internal_temperature
+    name: "CPU Temperature"
+  - platform: debug
+    loop_time:
+      name: "Loop Time"
+
+# 18-band EQ: 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 200, 315, 500, 800, 1250, 2000, 5000 Hz
+number:
+  - platform: template
+    name: "EQ 0040Hz"
+    id: eq_40hz
+    min_value: -15
+    max_value: 15
+    step: 1
+    initial_value: 0
+    unit_of_measurement: "dB"
+    restore_value: true
+    on_value:
+      - lambda: |-
+          extern void set_eq_band(int band, float gain_db);
+          set_eq_band(0, x);
+  
+  - platform: template
+    name: "EQ 0050Hz"
+    id: eq_50hz
+    min_value: -15
+    max_value: 15
+    step: 1
+    initial_value: 0
+    unit_of_measurement: "dB"
+    restore_value: true
+    on_value:
+      - lambda: |-
+          extern void set_eq_band(int band, float gain_db);
+          set_eq_band(1, x);
+  
+  - platform: template
+    name: "EQ 0060Hz"
+    id: eq_60hz
+    min_value: -15
+    max_value: 15
+    step: 1
+    initial_value: 0
+    unit_of_measurement: "dB"
+    restore_value: true
+    on_value:
+      - lambda: |-
+          extern void set_eq_band(int band, float gain_db);
+          set_eq_band(2, x);
+  
+  - platform: template
+    name: "EQ 0070Hz"
+    id: eq_70hz
+    min_value: -15
+    max_value: 15
+    step: 1
+    initial_value: 0
+    unit_of_measurement: "dB"
+    restore_value: true
+    on_value:
+      - lambda: |-
+          extern void set_eq_band(int band, float gain_db);
+          set_eq_band(3, x);
+  
+  - platform: template
+    name: "EQ 0080Hz"
+    id: eq_80hz
+    min_value: -15
+    max_value: 15
+    step: 1
+    initial_value: 0
+    unit_of_measurement: "dB"
+    restore_value: true
+    on_value:
+      - lambda: |-
+          extern void set_eq_band(int band, float gain_db);
+          set_eq_band(4, x);
+  
+  - platform: template
+    name: "EQ 0090Hz"
+    id: eq_90hz
+    min_value: -15
+    max_value: 15
+    step: 1
+    initial_value: 0
+    unit_of_measurement: "dB"
+    restore_value: true
+    on_value:
+      - lambda: |-
+          extern void set_eq_band(int band, float gain_db);
+          set_eq_band(5, x);
+  
+  - platform: template
+    name: "EQ 0100Hz"
+    id: eq_100hz
+    min_value: -15
+    max_value: 15
+    step: 1
+    initial_value: 0
+    unit_of_measurement: "dB"
+    restore_value: true
+    on_value:
+      - lambda: |-
+          extern void set_eq_band(int band, float gain_db);
+          set_eq_band(6, x);
+  
+  - platform: template
+    name: "EQ 0110Hz"
+    id: eq_110hz
+    min_value: -15
+    max_value: 15
+    step: 1
+    initial_value: 0
+    unit_of_measurement: "dB"
+    restore_value: true
+    on_value:
+      - lambda: |-
+          extern void set_eq_band(int band, float gain_db);
+          set_eq_band(7, x);
+  
+  - platform: template
+    name: "EQ 0120Hz"
+    id: eq_120hz
+    min_value: -15
+    max_value: 15
+    step: 1
+    initial_value: 0
+    unit_of_measurement: "dB"
+    restore_value: true
+    on_value:
+      - lambda: |-
+          extern void set_eq_band(int band, float gain_db);
+          set_eq_band(8, x);
+  
+  - platform: template
+    name: "EQ 0130Hz"
+    id: eq_130hz
+    min_value: -15
+    max_value: 15
+    step: 1
+    initial_value: 0
+    unit_of_measurement: "dB"
+    restore_value: true
+    on_value:
+      - lambda: |-
+          extern void set_eq_band(int band, float gain_db);
+          set_eq_band(9, x);
+  
+  - platform: template
+    name: "EQ 0140Hz"
+    id: eq_140hz
+    min_value: -15
+    max_value: 15
+    step: 1
+    initial_value: 0
+    unit_of_measurement: "dB"
+    restore_value: true
+    on_value:
+      - lambda: |-
+          extern void set_eq_band(int band, float gain_db);
+          set_eq_band(10, x);
+  
+  - platform: template
+    name: "EQ 0200Hz"
+    id: eq_200hz
+    min_value: -15
+    max_value: 15
+    step: 1
+    initial_value: 0
+    unit_of_measurement: "dB"
+    restore_value: true
+    on_value:
+      - lambda: |-
+          extern void set_eq_band(int band, float gain_db);
+          set_eq_band(11, x);
+  
+  - platform: template
+    name: "EQ 0315Hz"
+    id: eq_315hz
+    min_value: -15
+    max_value: 15
+    step: 1
+    initial_value: 0
+    unit_of_measurement: "dB"
+    restore_value: true
+    on_value:
+      - lambda: |-
+          extern void set_eq_band(int band, float gain_db);
+          set_eq_band(12, x);
+  
+  - platform: template
+    name: "EQ 0500Hz"
+    id: eq_500hz
+    min_value: -15
+    max_value: 15
+    step: 1
+    initial_value: 0
+    unit_of_measurement: "dB"
+    restore_value: true
+    on_value:
+      - lambda: |-
+          extern void set_eq_band(int band, float gain_db);
+          set_eq_band(13, x);
+  
+  - platform: template
+    name: "EQ 0800Hz"
+    id: eq_800hz
+    min_value: -15
+    max_value: 15
+    step: 1
+    initial_value: 0
+    unit_of_measurement: "dB"
+    restore_value: true
+    on_value:
+      - lambda: |-
+          extern void set_eq_band(int band, float gain_db);
+          set_eq_band(14, x);
+  
+  - platform: template
+    name: "EQ 1250Hz"
+    id: eq_1250hz
+    min_value: -15
+    max_value: 15
+    step: 1
+    initial_value: 0
+    unit_of_measurement: "dB"
+    restore_value: true
+    on_value:
+      - lambda: |-
+          extern void set_eq_band(int band, float gain_db);
+          set_eq_band(15, x);
+  
+  - platform: template
+    name: "EQ 2000Hz"
+    id: eq_2000hz
+    min_value: -15
+    max_value: 15
+    step: 1
+    initial_value: 0
+    unit_of_measurement: "dB"
+    restore_value: true
+    on_value:
+      - lambda: |-
+          extern void set_eq_band(int band, float gain_db);
+          set_eq_band(16, x);
+  
+  - platform: template
+    name: "EQ 5000Hz"
+    id: eq_5000hz
+    min_value: -15
+    max_value: 15
+    step: 1
+    initial_value: 0
+    unit_of_measurement: "dB"
+    restore_value: true
+    on_value:
+      - lambda: |-
+          extern void set_eq_band(int band, float gain_db);
+          set_eq_band(17, x);
+
+select:
+  - platform: template
+    name: "EQ Preset"
+    id: eq_preset
+    optimistic: true
+    options:
+      - "Flat (Bypass)"
+      - "Flat (Full Range)"
+      - "Subwoofer"
+      - "Bookshelf"
+      - "Floor Standing"
+      - "Near Field"
+      - "Small/Portable"
+      - "Custom"
+    initial_option: "Flat (Full Range)"
+    restore_value: true
+    on_value:
+      - lambda: |-
+          extern void apply_eq_preset(const char* preset);
+          apply_eq_preset(x.c_str());
+          
+          // Update UI to reflect preset values
+          if (strcmp(x.c_str(), "Flat (Bypass)") == 0 || strcmp(x.c_str(), "Flat (Full Range)") == 0) {
+            id(eq_40hz).publish_state(0);
+            id(eq_50hz).publish_state(0);
+            id(eq_60hz).publish_state(0);
+            id(eq_70hz).publish_state(0);
+            id(eq_80hz).publish_state(0);
+            id(eq_90hz).publish_state(0);
+            id(eq_100hz).publish_state(0);
+            id(eq_110hz).publish_state(0);
+            id(eq_120hz).publish_state(0);
+            id(eq_130hz).publish_state(0);
+            id(eq_140hz).publish_state(0);
+            id(eq_200hz).publish_state(0);
+            id(eq_315hz).publish_state(0);
+            id(eq_500hz).publish_state(0);
+            id(eq_800hz).publish_state(0);
+            id(eq_1250hz).publish_state(0);
+            id(eq_2000hz).publish_state(0);
+            id(eq_5000hz).publish_state(0);
+          } else if (strcmp(x.c_str(), "Subwoofer") == 0) {
+            id(eq_40hz).publish_state(8);
+            id(eq_50hz).publish_state(7);
+            id(eq_60hz).publish_state(6);
+            id(eq_70hz).publish_state(5);
+            id(eq_80hz).publish_state(4);
+            id(eq_90hz).publish_state(3);
+            id(eq_100hz).publish_state(2);
+            id(eq_110hz).publish_state(1);
+            id(eq_120hz).publish_state(0);
+            id(eq_130hz).publish_state(-10);
+            id(eq_140hz).publish_state(-12);
+            id(eq_200hz).publish_state(-13);
+            id(eq_315hz).publish_state(-14);
+            id(eq_500hz).publish_state(-15);
+            id(eq_800hz).publish_state(-15);
+            id(eq_1250hz).publish_state(-15);
+            id(eq_2000hz).publish_state(-15);
+            id(eq_5000hz).publish_state(-15);
+          } else if (strcmp(x.c_str(), "Bookshelf") == 0) {
+            id(eq_40hz).publish_state(4);
+            id(eq_50hz).publish_state(4);
+            id(eq_60hz).publish_state(3);
+            id(eq_70hz).publish_state(3);
+            id(eq_80hz).publish_state(2);
+            id(eq_90hz).publish_state(2);
+            id(eq_100hz).publish_state(1);
+            id(eq_110hz).publish_state(1);
+            id(eq_120hz).publish_state(0);
+            id(eq_130hz).publish_state(0);
+            id(eq_140hz).publish_state(0);
+            id(eq_200hz).publish_state(0);
+            id(eq_315hz).publish_state(-1);
+            id(eq_500hz).publish_state(0);
+            id(eq_800hz).publish_state(1);
+            id(eq_1250hz).publish_state(2);
+            id(eq_2000hz).publish_state(2);
+            id(eq_5000hz).publish_state(3);
+          } else if (strcmp(x.c_str(), "Floor Standing") == 0) {
+            id(eq_40hz).publish_state(3);
+            id(eq_50hz).publish_state(2);
+            id(eq_60hz).publish_state(2);
+            id(eq_70hz).publish_state(1);
+            id(eq_80hz).publish_state(1);
+            id(eq_90hz).publish_state(1);
+            id(eq_100hz).publish_state(0);
+            id(eq_110hz).publish_state(0);
+            id(eq_120hz).publish_state(0);
+            id(eq_130hz).publish_state(0);
+            id(eq_140hz).publish_state(-1);
+            id(eq_200hz).publish_state(-1);
+            id(eq_315hz).publish_state(-1);
+            id(eq_500hz).publish_state(0);
+            id(eq_800hz).publish_state(0);
+            id(eq_1250hz).publish_state(1);
+            id(eq_2000hz).publish_state(1);
+            id(eq_5000hz).publish_state(2);
+          } else if (strcmp(x.c_str(), "Near Field") == 0) {
+            id(eq_40hz).publish_state(-1);
+            id(eq_50hz).publish_state(-1);
+            id(eq_60hz).publish_state(0);
+            id(eq_70hz).publish_state(0);
+            id(eq_80hz).publish_state(0);
+            id(eq_90hz).publish_state(0);
+            id(eq_100hz).publish_state(0);
+            id(eq_110hz).publish_state(0);
+            id(eq_120hz).publish_state(0);
+            id(eq_130hz).publish_state(0);
+            id(eq_140hz).publish_state(0);
+            id(eq_200hz).publish_state(0);
+            id(eq_315hz).publish_state(0);
+            id(eq_500hz).publish_state(0);
+            id(eq_800hz).publish_state(0);
+            id(eq_1250hz).publish_state(1);
+            id(eq_2000hz).publish_state(1);
+            id(eq_5000hz).publish_state(0);
+          } else if (strcmp(x.c_str(), "Small/Portable") == 0) {
+            id(eq_40hz).publish_state(-8);
+            id(eq_50hz).publish_state(-6);
+            id(eq_60hz).publish_state(-5);
+            id(eq_70hz).publish_state(-4);
+            id(eq_80hz).publish_state(-3);
+            id(eq_90hz).publish_state(-2);
+            id(eq_100hz).publish_state(-1);
+            id(eq_110hz).publish_state(0);
+            id(eq_120hz).publish_state(0);
+            id(eq_130hz).publish_state(1);
+            id(eq_140hz).publish_state(1);
+            id(eq_200hz).publish_state(2);
+            id(eq_315hz).publish_state(2);
+            id(eq_500hz).publish_state(2);
+            id(eq_800hz).publish_state(3);
+            id(eq_1250hz).publish_state(4);
+            id(eq_2000hz).publish_state(4);
+            id(eq_5000hz).publish_state(5);
+          }
