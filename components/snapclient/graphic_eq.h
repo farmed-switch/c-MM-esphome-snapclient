@@ -182,25 +182,25 @@ extern "C" inline void apply_eq_preset(const char* preset) {
         eq.enabled = true;
         
     } else if (strcmp(preset, "Subwoofer") == 0) {
-        // Deep bass boost for subwoofer, cut mids/highs
-        eq.gain_db[0] = 8;    // 40Hz
-        eq.gain_db[1] = 7;    // 50Hz
-        eq.gain_db[2] = 6;    // 60Hz
-        eq.gain_db[3] = 5;    // 70Hz
-        eq.gain_db[4] = 4;    // 80Hz
-        eq.gain_db[5] = 3;    // 90Hz
-        eq.gain_db[6] = 2;    // 100Hz
-        eq.gain_db[7] = 1;    // 110Hz
-        eq.gain_db[8] = 0;    // 120Hz
-        eq.gain_db[9] = -1;   // 130Hz
-        eq.gain_db[10] = -2;  // 140Hz
-        eq.gain_db[11] = -2;  // 200Hz
-        eq.gain_db[12] = -3;  // 315Hz
-        eq.gain_db[13] = -1;  // 500Hz
-        eq.gain_db[14] = 0;   // 800Hz
-        eq.gain_db[15] = -1;  // 1250Hz
-        eq.gain_db[16] = -2;  // 2000Hz
-        eq.gain_db[17] = 2;   // 5000Hz
+        // Deep bass boost + lowpass filter (cut everything above 120Hz)
+        eq.gain_db[0] = 8;     // 40Hz
+        eq.gain_db[1] = 7;     // 50Hz
+        eq.gain_db[2] = 6;     // 60Hz
+        eq.gain_db[3] = 5;     // 70Hz
+        eq.gain_db[4] = 4;     // 80Hz
+        eq.gain_db[5] = 3;     // 90Hz
+        eq.gain_db[6] = 2;     // 100Hz
+        eq.gain_db[7] = 1;     // 110Hz
+        eq.gain_db[8] = 0;     // 120Hz (crossover point)
+        eq.gain_db[9] = -10;   // 130Hz (steep rolloff)
+        eq.gain_db[10] = -12;  // 140Hz
+        eq.gain_db[11] = -13;  // 200Hz
+        eq.gain_db[12] = -14;  // 315Hz
+        eq.gain_db[13] = -15;  // 500Hz (full cut)
+        eq.gain_db[14] = -15;  // 800Hz
+        eq.gain_db[15] = -15;  // 1250Hz
+        eq.gain_db[16] = -15;  // 2000Hz
+        eq.gain_db[17] = -15;  // 5000Hz
         eq.enabled = true;
         
     } else if (strcmp(preset, "Bookshelf") == 0) {
