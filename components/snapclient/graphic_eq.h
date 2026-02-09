@@ -168,15 +168,21 @@ extern "C" inline void apply_eq_preset(const char* preset) {
     ESP_LOGI(EQ_TAG, "Applying preset: %s", preset);
     
     if (strcmp(preset, "Flat (Bypass)") == 0) {
-        // All bands to 0dB
+        // All bands to 0dB, EQ disabled
         for (int i = 0; i < EQ_BANDS; i++) {
             eq.gain_db[i] = 0.0f;
         }
         eq.enabled = false;  // Full bypass
         
-    } else if (strcmp(preset, "Subwoofer Boost") == 0) {
-        // Bass boost, mid cut, treble boost (for subwoofer)
-        // 40-140Hz bass bands (10Hz steps)
+    } else if (strcmp(preset, "Flat (Full Range)") == 0) {
+        // All bands to 0dB, EQ enabled (for transparent processing)
+        for (int i = 0; i < EQ_BANDS; i++) {
+            eq.gain_db[i] = 0.0f;
+        }
+        eq.enabled = true;
+        
+    } else if (strcmp(preset, "Subwoofer") == 0) {
+        // Deep bass boost for subwoofer, cut mids/highs
         eq.gain_db[0] = 8;    // 40Hz
         eq.gain_db[1] = 7;    // 50Hz
         eq.gain_db[2] = 6;    // 60Hz
@@ -188,7 +194,6 @@ extern "C" inline void apply_eq_preset(const char* preset) {
         eq.gain_db[8] = 0;    // 120Hz
         eq.gain_db[9] = -1;   // 130Hz
         eq.gain_db[10] = -2;  // 140Hz
-        // Higher frequency bands
         eq.gain_db[11] = -2;  // 200Hz
         eq.gain_db[12] = -3;  // 315Hz
         eq.gain_db[13] = -1;  // 500Hz
@@ -196,6 +201,94 @@ extern "C" inline void apply_eq_preset(const char* preset) {
         eq.gain_db[15] = -1;  // 1250Hz
         eq.gain_db[16] = -2;  // 2000Hz
         eq.gain_db[17] = 2;   // 5000Hz
+        eq.enabled = true;
+        
+    } else if (strcmp(preset, "Bookshelf") == 0) {
+        // Compensate for small bookshelf speakers (light bass boost, bright highs)
+        eq.gain_db[0] = 4;    // 40Hz
+        eq.gain_db[1] = 4;    // 50Hz
+        eq.gain_db[2] = 3;    // 60Hz
+        eq.gain_db[3] = 3;    // 70Hz
+        eq.gain_db[4] = 2;    // 80Hz
+        eq.gain_db[5] = 2;    // 90Hz
+        eq.gain_db[6] = 1;    // 100Hz
+        eq.gain_db[7] = 1;    // 110Hz
+        eq.gain_db[8] = 0;    // 120Hz
+        eq.gain_db[9] = 0;    // 130Hz
+        eq.gain_db[10] = 0;   // 140Hz
+        eq.gain_db[11] = 0;   // 200Hz
+        eq.gain_db[12] = -1;  // 315Hz
+        eq.gain_db[13] = 0;   // 500Hz
+        eq.gain_db[14] = 1;   // 800Hz
+        eq.gain_db[15] = 2;   // 1250Hz
+        eq.gain_db[16] = 2;   // 2000Hz
+        eq.gain_db[17] = 3;   // 5000Hz
+        eq.enabled = true;
+        
+    } else if (strcmp(preset, "Floor Standing") == 0) {
+        // Balanced full-range curve for tower/floor speakers
+        eq.gain_db[0] = 3;    // 40Hz
+        eq.gain_db[1] = 2;    // 50Hz
+        eq.gain_db[2] = 2;    // 60Hz
+        eq.gain_db[3] = 1;    // 70Hz
+        eq.gain_db[4] = 1;    // 80Hz
+        eq.gain_db[5] = 1;    // 90Hz
+        eq.gain_db[6] = 0;    // 100Hz
+        eq.gain_db[7] = 0;    // 110Hz
+        eq.gain_db[8] = 0;    // 120Hz
+        eq.gain_db[9] = 0;    // 130Hz
+        eq.gain_db[10] = -1;  // 140Hz
+        eq.gain_db[11] = -1;  // 200Hz
+        eq.gain_db[12] = -1;  // 315Hz
+        eq.gain_db[13] = 0;   // 500Hz
+        eq.gain_db[14] = 0;   // 800Hz
+        eq.gain_db[15] = 1;   // 1250Hz
+        eq.gain_db[16] = 1;   // 2000Hz
+        eq.gain_db[17] = 2;   // 5000Hz
+        eq.enabled = true;
+        
+    } else if (strcmp(preset, "Near Field") == 0) {
+        // Studio monitor curve - neutral with slight presence boost
+        eq.gain_db[0] = -1;   // 40Hz
+        eq.gain_db[1] = -1;   // 50Hz
+        eq.gain_db[2] = 0;    // 60Hz
+        eq.gain_db[3] = 0;    // 70Hz
+        eq.gain_db[4] = 0;    // 80Hz
+        eq.gain_db[5] = 0;    // 90Hz
+        eq.gain_db[6] = 0;    // 100Hz
+        eq.gain_db[7] = 0;    // 110Hz
+        eq.gain_db[8] = 0;    // 120Hz
+        eq.gain_db[9] = 0;    // 130Hz
+        eq.gain_db[10] = 0;   // 140Hz
+        eq.gain_db[11] = 0;   // 200Hz
+        eq.gain_db[12] = 0;   // 315Hz
+        eq.gain_db[13] = 0;   // 500Hz
+        eq.gain_db[14] = 0;   // 800Hz
+        eq.gain_db[15] = 1;   // 1250Hz
+        eq.gain_db[16] = 1;   // 2000Hz
+        eq.gain_db[17] = 0;   // 5000Hz
+        eq.enabled = true;
+        
+    } else if (strcmp(preset, "Small/Portable") == 0) {
+        // For laptop/phone speakers - cut deep bass, boost mids/highs
+        eq.gain_db[0] = -8;   // 40Hz
+        eq.gain_db[1] = -6;   // 50Hz
+        eq.gain_db[2] = -5;   // 60Hz
+        eq.gain_db[3] = -4;   // 70Hz
+        eq.gain_db[4] = -3;   // 80Hz
+        eq.gain_db[5] = -2;   // 90Hz
+        eq.gain_db[6] = -1;   // 100Hz
+        eq.gain_db[7] = 0;    // 110Hz
+        eq.gain_db[8] = 0;    // 120Hz
+        eq.gain_db[9] = 1;    // 130Hz
+        eq.gain_db[10] = 1;   // 140Hz
+        eq.gain_db[11] = 2;   // 200Hz
+        eq.gain_db[12] = 2;   // 315Hz
+        eq.gain_db[13] = 2;   // 500Hz
+        eq.gain_db[14] = 3;   // 800Hz
+        eq.gain_db[15] = 4;   // 1250Hz
+        eq.gain_db[16] = 4;   // 2000Hz
+        eq.gain_db[17] = 5;   // 5000Hz
         eq.enabled = true;
         
     } else if (strcmp(preset, "Custom") == 0) {
