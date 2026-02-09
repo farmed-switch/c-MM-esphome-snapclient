@@ -1,9 +1,15 @@
 #ifndef GRAPHIC_EQ_H
 #define GRAPHIC_EQ_H
 
+#include <cmath>
+#include <string.h>
 #include "esp_dsp.h"
 #include "esp_log.h"
-#include <string.h>
+
+// Define M_PI if not already defined
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
 
 // 10-band graphic equalizer
 #define EQ_BANDS 10
