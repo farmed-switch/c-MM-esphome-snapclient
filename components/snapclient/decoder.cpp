@@ -26,6 +26,9 @@
 #include "dsp_processor.h"
 #endif
 
+// Graphic Equalizer (10-band parametric EQ)
+#include "graphic_eq.h"
+
 // Opus decoder is implemented as a subcomponet from master git repo
 #include "opus.h"
 
@@ -323,6 +326,11 @@ static FLAC__StreamDecoderWriteStatus write_callback(const FLAC__StreamDecoder *
     pcmChunk.outData[pcmChunk.bytes + 4 * i + 3] = (uint8_t) (buffer[1][i] >> 8);
   }
 
+  // Apply 10-band graphic EQ to the decoded PCM audio
+  // Process the frame that was just written
+  int16_t* audio_samples = (int16_t*)(&pcmChunk.outData[pcmChunk.bytes]);
+  eq_process_stereo_int16(audio_samples, frame->header.blocksize);
+
   pcmChunk.bytes += bytes;
 
   scSet->chkInFrames = frame->header.blocksize;
@@ -347,6 +355,9 @@ void metadata_callback(const FLAC__StreamDecoder *decoder, const FLAC__StreamMet
     scSet->bits = (i2s_data_bit_width_t) metadata->data.stream_info.bits_per_sample;
 
     ESP_LOGI(TAG, "fLaC sampleformat: %ld:%d:%d", scSet->sr, scSet->bits, scSet->ch);
+
+    // Initialize graphic EQ with actual sample rate
+    eq_init(scSet->sr);
 
     // ESP_LOGE(TAG, "%s: data processed", __func__);
   }
