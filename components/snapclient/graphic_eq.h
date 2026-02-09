@@ -41,7 +41,7 @@ static const char* EQ_TAG = "GraphicEQ";
  * Initialize the graphic equalizer
  * Call this after sample rate is known from metadata
  */
-void eq_init(uint32_t sample_rate) {
+inline void eq_init(uint32_t sample_rate) {
     eq.sample_rate = sample_rate;
     ESP_LOGI(EQ_TAG, "Initializing 10-band graphic EQ @ %lu Hz", sample_rate);
     
@@ -98,7 +98,7 @@ void eq_init(uint32_t sample_rate) {
  * @param samples: Interleaved stereo int16 buffer [L, R, L, R, ...]
  * @param num_samples: Number of FRAMES (stereo pairs)
  */
-void eq_process_stereo_int16(int16_t* samples, size_t num_samples) {
+inline void eq_process_stereo_int16(int16_t* samples, size_t num_samples) {
     if (!eq.enabled) {
         return;  // Bypass EQ
     }
@@ -149,7 +149,7 @@ void eq_process_stereo_int16(int16_t* samples, size_t num_samples) {
  * @param band: Band index (0-9)
  * @param gain_db: Gain in dB (-15 to +15)
  */
-extern "C" void set_eq_band(int band, float gain_db) {
+extern "C" inline void set_eq_band(int band, float gain_db) {
     if (band < 0 || band >= EQ_BANDS) {
         ESP_LOGE(EQ_TAG, "Invalid band index: %d", band);
         return;
@@ -170,7 +170,7 @@ extern "C" void set_eq_band(int band, float gain_db) {
 /**
  * ESPHome callback: Apply preset
  */
-extern "C" void apply_eq_preset(const char* preset) {
+extern "C" inline void apply_eq_preset(const char* preset) {
     ESP_LOGI(EQ_TAG, "Applying preset: %s", preset);
     
     if (strcmp(preset, "Flat (Bypass)") == 0) {
@@ -207,7 +207,7 @@ extern "C" void apply_eq_preset(const char* preset) {
 /**
  * ESPHome callback: Enable/disable entire EQ
  */
-extern "C" void enable_eq(bool enable) {
+extern "C" inline void enable_eq(bool enable) {
     eq.enabled = enable;
     ESP_LOGI(EQ_TAG, "EQ %s", enable ? "enabled" : "disabled");
     
