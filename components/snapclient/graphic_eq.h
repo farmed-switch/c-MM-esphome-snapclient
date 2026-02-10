@@ -128,9 +128,38 @@ inline void eq_process_stereo_int16(int16_t* samples, size_t num_samples) {
             eq.delay_right[band][0] = w_right;
         }
         
-        // Soft clip to prevent overflow
-        left = fmaxf(-1.0f, fminf(1.0f, left));
-        right = fmaxf(-1.0f, fminf(1.0f, right));
+        // Cubic soft-clipping to prevent overflow and reduce distortion
+        // Uses a smooth cubic curve near clipping threshold (0.7) instead of hard clipping at 1.0
+        // This prevents the "cracks" that occur with large EQ gains (Andy's cubic soft-clipping)
+        const float threshold = 0.7f;  // Start soft-clipping at 70% of max
+        
+        // Left channel cubic soft-clip
+        if (left > 1.0f) {
+            left = 1.0f;  // Hard limit at absolute max
+        } else if (left > threshold) {
+            // Smooth cubic transition from threshold to 1.0
+            float x = (left - threshold) / (1.0f - threshold);
+            left = threshold + (1.0f - threshold) * (x - x*x*x/3.0f);
+        } else if (left < -1.0f) {
+            left = -1.0f;
+        } else if (left < -threshold) {
+            // Smooth cubic transition for negative side
+            float x = (-left - threshold) / (1.0f - threshold);
+            left = -threshold - (1.0f - threshold) * (x - x*x*x/3.0f);
+        }
+        
+        // Right channel cubic soft-clip
+        if (right > 1.0f) {
+            right = 1.0f;
+        } else if (right > threshold) {
+            float x = (right - threshold) / (1.0f - threshold);
+            right = threshold + (1.0f - threshold) * (x - x*x*x/3.0f);
+        } else if (right < -1.0f) {
+            right = -1.0f;
+        } else if (right < -threshold) {
+            float x = (-right - threshold) / (1.0f - threshold);
+            right = -threshold - (1.0f - threshold) * (x - x*x*x/3.0f);
+        }
         
         // Convert back to int16
         samples[i * 2] = (int16_t)(left * 32767.0f);

@@ -38,6 +38,39 @@ graphic_eq_t eq = {
     .sample_rate = 44100
 };
 
+// Idle detection for automatic DAC mute when no audio playing
+static int64_t last_audio_timestamp = 0;  // Timestamp of last audio samples (microseconds)
+static bool auto_muted = false;            // Track if we've auto-muted due to idle
+static const int64_t IDLE_TIMEOUT_US = 5000000;  // 5 seconds idle timeout
+static TaskHandle_t idle_watchdog_task_handle = NULL;
+
+/**
+ * Watchdog task that monitors audio activity and automatically mutes DAC when idle
+ * This prevents ghost sync issues and RESYNCING loops when snapserver is idle
+ */
+void idle_watchdog_task(void *pvParameters) {
+  ESP_LOGI(TAG, "Idle detection watchdog started (timeout: 5s)");
+  
+  while (1) {
+    vTaskDelay(pdMS_TO_TICKS(1000));  // Check every second
+    
+    if (last_audio_timestamp == 0) {
+      // No audio received yet, skip
+      continue;
+    }
+    
+    int64_t now = esp_timer_get_time();
+    int64_t idle_time = now - last_audio_timestamp;
+    
+    if (idle_time > IDLE_TIMEOUT_US && !auto_muted) {
+      // Audio has been idle for more than 5 seconds, auto-mute
+      ESP_LOGI(TAG, "Audio idle detected (%.1fs), auto-muting DAC", idle_time / 1000000.0);
+      audio_set_mute(true);
+      auto_muted = true;
+    }
+  }
+}
+
 // Opus decoder is implemented as a subcomponet from master git repo
 #include "opus.h"
 
@@ -307,6 +340,16 @@ static FLAC__StreamDecoderWriteStatus write_callback(const FLAC__StreamDecoder *
   }
   if (frame->header.bits_per_sample != scSet->bits) {
     ESP_LOGE(TAG,
+  // Update idle detection timestamp - audio is actively playing
+  last_audio_timestamp = esp_timer_get_time();
+  
+  // If we previously auto-muted due to idle, unmute now that audio is back
+  if (auto_muted) {
+    ESP_LOGI(TAG, "Audio resumed, unmuting DAC");
+    audio_set_mute(false);
+    auto_muted = false;
+  }
+
              "ERROR: frame header reports different bps %ld than previous "
              "metadata block %d",
              frame->header.bits_per_sample, scSet->bits);
@@ -382,6 +425,19 @@ void error_callback(const FLAC__StreamDecoder *decoder, FLAC__StreamDecoderError
 }
 
 /**
+  
+  // Start idle detection watchdog task
+  if (idle_watchdog_task_handle == NULL) {
+    xTaskCreatePinnedToCore(
+      idle_watchdog_task,
+      "idle_watchdog",
+      4096,
+      NULL,
+      5,  // Priority 5 (lower than audio tasks)
+      &idle_watchdog_task_handle,
+      tskNO_AFFINITY
+    );
+  }
  *
  */
 void init_snapcast(QueueHandle_t audioQHdl, const char *name, const char *host, uint16_t port) {
