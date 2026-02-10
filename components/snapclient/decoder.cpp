@@ -38,6 +38,22 @@ graphic_eq_t eq = {
     .sample_rate = 44100
 };
 
+// Opus decoder is implemented as a subcomponet from master git repo
+#include "opus.h"
+
+// flac decoder is implemented as a subcomponet from master git repo
+#include "FLAC/stream_decoder.h"
+#include "player.h"
+#include "snapcast.h"
+
+namespace esphome {
+namespace snapclient {
+
+static bool isCachedChunk = false;
+static uint32_t cachedBlocks = 0;
+
+static const char *const TAG = "snapclient";
+
 // Idle detection for automatic DAC mute when no audio playing
 static int64_t last_audio_timestamp = 0;  // Timestamp of last audio samples (microseconds)
 static bool auto_muted = false;            // Track if we've auto-muted due to idle
@@ -70,22 +86,6 @@ void idle_watchdog_task(void *pvParameters) {
     }
   }
 }
-
-// Opus decoder is implemented as a subcomponet from master git repo
-#include "opus.h"
-
-// flac decoder is implemented as a subcomponet from master git repo
-#include "FLAC/stream_decoder.h"
-#include "player.h"
-#include "snapcast.h"
-
-namespace esphome {
-namespace snapclient {
-
-static bool isCachedChunk = false;
-static uint32_t cachedBlocks = 0;
-
-static const char *const TAG = "snapclient";
 
 static FLAC__StreamDecoder *flacDecoder = NULL;
 
@@ -340,16 +340,6 @@ static FLAC__StreamDecoderWriteStatus write_callback(const FLAC__StreamDecoder *
   }
   if (frame->header.bits_per_sample != scSet->bits) {
     ESP_LOGE(TAG,
-  // Update idle detection timestamp - audio is actively playing
-  last_audio_timestamp = esp_timer_get_time();
-  
-  // If we previously auto-muted due to idle, unmute now that audio is back
-  if (auto_muted) {
-    ESP_LOGI(TAG, "Audio resumed, unmuting DAC");
-    audio_set_mute(false);
-    auto_muted = false;
-  }
-
              "ERROR: frame header reports different bps %ld than previous "
              "metadata block %d",
              frame->header.bits_per_sample, scSet->bits);
@@ -382,6 +372,16 @@ static FLAC__StreamDecoderWriteStatus write_callback(const FLAC__StreamDecoder *
   // Process the frame that was just written
   int16_t* audio_samples = (int16_t*)(&pcmChunk.outData[pcmChunk.bytes]);
   eq_process_stereo_int16(audio_samples, frame->header.blocksize);
+
+  // Update idle detection timestamp - audio is actively playing
+  last_audio_timestamp = esp_timer_get_time();
+  
+  // If we previously auto-muted due to idle, unmute now that audio is back
+  if (auto_muted) {
+    ESP_LOGI(TAG, "Audio resumed, unmuting DAC");
+    audio_set_mute(false);
+    auto_muted = false;
+  }
 
   pcmChunk.bytes += bytes;
 
@@ -448,6 +448,19 @@ void init_snapcast(QueueHandle_t audioQHdl, const char *name, const char *host, 
   SNAPCAST_CLIENT_NAME = (char *) name;
   SNAPCAST_SERVER_HOST = (char *) host;
   SNAPCAST_SERVER_PORT = port;
+  
+  // Start idle detection watchdog task
+  if (idle_watchdog_task_handle == NULL) {
+    xTaskCreatePinnedToCore(
+      idle_watchdog_task,
+      "idle_watchdog",
+      4096,
+      NULL,
+      5,  // Priority 5 (lower than audio tasks)
+      &idle_watchdog_task_handle,
+      tskNO_AFFINITY
+    );
+  }
 }
 
 /**
