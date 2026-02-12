@@ -11,6 +11,25 @@ Flash directly from **Home Assistant** or esphome.io web interface.
 
 ---
 
+## 🎵 About Sonocotta Audio Boards
+
+This project is designed for the excellent **ESP32 Audio Dock series** by [Sonocotta](https://www.tindie.com/stores/sonocotta/) - professional-grade audio boards that punch well above their price point.
+
+**Why Sonocotta boards stand out:**
+- 🏆 **Premium components** - TAS5805M, PCM5122, TAS5825M DACs with proper I2C control
+- 🔧 **Thoughtful design** - Clean signal paths, proper grounding, quality amplifiers
+- 💪 **Real power** - Up to 25W @ 8Ω output, perfect for serious speakers
+- 🎚️ **Hardware DSP** - Built-in 15-band EQ on Louder series (TAS5805M/TAS5825M)
+- 🌐 **Options** - WiFi, Ethernet (W5500), displays, IR receivers, RGB LEDs
+- 📐 **Open design** - Full schematics available, ESP32-S3 variants with PSRAM
+- 💰 **Fair pricing** - Professional audio quality without the audiophile markup
+
+Perfect for multiroom audio, Snapcast clients, media players, and DIY speaker systems. These aren't toy boards - they're designed by someone who knows audio engineering.
+
+**👉 [Shop Sonocotta boards on Tindie](https://www.tindie.com/stores/sonocotta/)** - Support independent hardware development!
+
+---
+
 ## 🚀 Quick Start
 
 ### 1. Choose Your Configuration Method
