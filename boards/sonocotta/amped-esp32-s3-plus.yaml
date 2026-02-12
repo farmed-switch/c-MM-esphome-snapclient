@@ -74,12 +74,6 @@ esp32:
       CONFIG_BT_BLE_DYNAMIC_ENV_MEMORY: "y"
       CONFIG_MBEDTLS_EXTERNAL_MEM_ALLOC: "y"
       CONFIG_MBEDTLS_SSL_PROTO_TLS1_3: "y"
-      
-      # DSP settings for software EQ
-      CONFIG_SNAPCLIENT_DSP_FLOW_BASS_TREBLE_EQ: "n"
-      CONFIG_USE_DSP_PROCESSOR: "y"
-      CONFIG_DSP_OPTIMIZED: "y"
-      CONFIG_DSP_MAX_FFT_SIZE: "4096"
 
 psram:
   mode: octal
