@@ -32,9 +32,9 @@ Designade av Artem Sokolov (sonocotta) - professionella ESP32 audio boards.
 | **HiFi-ESP32** | PCM5100A | Line 2.1V | - | ❌ | esp32, esp32-s3, s3-mic, esp32-plus, s3-plus |
 | **Loud-ESP32** | MAX98357 | 3-5W @ 4Ω | USB-C | ❌ | esp32, esp32-s3 |
 | **Louder-ESP32** | TAS5805M | 25W @ 8Ω | 26V | ✅ 15-band | esp32, esp32-mic, s3, s3-mic |
-| **Louder-ESP32-Plus** | TAS5825M | 25W @ 8Ω | 26V | ✅ 15-band | **s3-plus** (NEW!) |
+| **Louder-ESP32-S3-Plus** 🆕 | TAS5825M | 25W @ 8Ω | 26V | ✅ 15-band | **s3-plus** |
 | **Amped-ESP32** | PCM5100+TPA | 22W @ 8Ω | 26V | ❌ | esp32, tpa3110, esp32-s3 |
-| **Amped-ESP32-S3-Plus** | PCM5122+TPA | 22W @ 8Ω | 26V | ❌ | **s3-plus** (NEW!) |
+| **Amped-ESP32-S3-Plus** 🆕 | PCM5122+TPA | 22W @ 8Ω | 26V | ❌ | **s3-plus** |
 
 🚧 = Component under development by sonocotta
 
@@ -46,14 +46,14 @@ Designade av Artem Sokolov (sonocotta) - professionella ESP32 audio boards.
 - ✅ `amped-esp32.yaml` - Rev H/H1/J (TPA3128 with MUTE pin)
 - ✅ `amped-esp32-tpa3110.yaml` - Rev G/G1/G2 (older TPA3110 amp)
 - ✅ `amped-esp32-s3.yaml` - All S3 revisions (Rev J+)
-- ✅ `amped-esp32-s3-plus.yaml` - **NEW!** ESP32-S3 Plus (PCM5122 DAC, OLED, RGB LED, IR receiver)
+- ✅ `amped-esp32-s3-plus.yaml` - 🆕 ESP32-S3 Plus (PCM5122 DAC, OLED, RGB LED, IR receiver)
 
 **Louder-ESP32:**
 - ✅ `louder-esp32.yaml` - Rev H through H5
 - ✅ `louder-esp32-mic.yaml` - Rev H6 (with mic header)
 - ✅ `louder-esp32-s3.yaml` - Rev J through J4
 - ✅ `louder-esp32-s3-mic.yaml` - Rev K0/K1 (with mic header)
-- ✅ `louder-esp32-s3-plus.yaml` - **NEW!** ESP32-S3 with TAS5825M DAC (OLED, RGB, IR, Ethernet)
+- ✅ `louder-esp32-s3-plus.yaml` - 🆕 ESP32-S3 with TAS5825M DAC (OLED, RGB, IR, Ethernet)
 
 **HiFi-ESP32:**
 - ✅ `hifi-esp32.yaml` - All ESP32 revisions (PCM5100A)
@@ -70,16 +70,16 @@ Designade av Artem Sokolov (sonocotta) - professionella ESP32 audio boards.
 
 ## 📦 Usage Example
 
-### Minimal Snapclient (Basic Setup)
+### Option A: Local includes (when you've cloned the repo)
 
 ```yaml
 substitutions:
   name: livingroom-snapclient
   friendly_name: "Living Room Audio"
 
-# Include board package
+# Include board package locally
 packages:
-  board: !include boards/sonocotta/louder-esp32-s3.yaml
+  board: !include boards/sonocotta/louder-esp32-s3-plus.yaml
 
 esphome:
   name: ${name}
@@ -108,21 +108,69 @@ snapclient:
   name: ${friendly_name}
   i2s_dout_pin: GPIO16  # GPIO16 for S3, GPIO25 for ESP32
   webserver_port: 8080
-
-# Application logic (LED, switches, etc.)
-switch:
-  - platform: tas5805m  # For Louder boards with TAS5805M
-    id: enable_dac
-    name: "${friendly_name} Enable"
-
-light:
-  - platform: esp32_rmt_led_strip
-    pin: ${led_pin}  # From board package
-    num_leds: 1
-    chipset: ws2812
 ```
 
-### Med Software EQ (18-band)
+### Option B: Remote GitHub packages (ESPHome directly from web)
+
+```yaml
+substitutions:
+  name: livingroom-snapclient
+  friendly_name: "Living Room Audio"
+
+# Include board package from GitHub
+packages:
+  - url: https://github.com/farmed-switch/c-MM-esphome-snapclient
+    ref: board-profiles  # or main
+    files: [boards/sonocotta/louder-esp32-s3-plus.yaml]
+    refresh: 0s
+
+esphome:
+  name: ${name}
+  friendly_name: ${friendly_name}
+
+# Network
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  power_save_mode: none
+
+api:
+ota:
+  platform: esphome
+
+# For ESP32-S3 boards, add USB Serial support
+logger:
+  level: DEBUG
+  hardware_uart: USB_SERIAL_JTAG
+
+# Snapclient
+external_components:
+  - source: github://farmed-switch/c-MM-esphome-snapclient@main
+    components: [ snapclient ]
+
+snapclient:
+  hostname: !secret snapserver_host
+  port: 1704
+  name: ${friendly_name}
+  i2s_dout_pin: GPIO16
+```
+
+**💡 Note:** Remote packages are perfect for ESPHome without cloning the repo!
+
+**⚠️ ESP32-S3 Important:** Always add USB Serial config for debug output:
+```yaml
+logger:
+  hardware_uart: USB_SERIAL_JTAG
+esp32:
+  framework:
+    sdkconfig_options:
+      CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG: "y"
+      CONFIG_ESP_CONSOLE_SECONDARY_NONE: "y"
+```
+
+---
+
+### With Software EQ (18-band)
 
 ```yaml
 # ... (include same base config as above)

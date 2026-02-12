@@ -13,36 +13,46 @@ Flash directly from **Home Assistant** or esphome.io web interface.
 
 ## 🚀 Quick Start
 
-### 1. Choose Your Configuration
+### 1. Choose Your Configuration Method
 
-**With Software EQ (18 bands):**
+**Option A: Local includes** (when cloned repo):
 ```yaml
 packages:
-  board: !include boards/sonocotta/amped-esp32-s3.yaml
+  board: !include boards/sonocotta/amped-esp32-s3-plus.yaml
   soft_eq: !include boards/software/soft-eq-18band.yaml
 # Add wifi, api, snapclient...
+```
+
+**Option B: Remote GitHub packages** (ESPHome directly from web):
+```yaml
+packages:
+  - url: https://github.com/farmed-switch/c-MM-esphome-snapclient
+    ref: board-profiles  # or main
+    files: [boards/sonocotta/amped-esp32-s3-plus.yaml]
+    refresh: 0s
+  - url: https://github.com/farmed-switch/c-MM-esphome-snapclient
+    ref: board-profiles
+    files: [boards/software/soft-eq-18band.yaml]
+    refresh: 0s
 ```
 
 **Minimal (no EQ):**
 ```yaml
 packages:
-  board: !include boards/sonocotta/amped-esp32-s3.yaml
+  - url: https://github.com/farmed-switch/c-MM-esphome-snapclient
+    ref: board-profiles
+    files: [boards/sonocotta/amped-esp32-s3-plus.yaml]
+    refresh: 0s
 # Add wifi, api, snapclient...
 ```
 
-**Hardware EQ (Louder boards):**
-```yaml
-packages:
-  board: !include boards/sonocotta/louder-esp32-s3.yaml
-# Hardware EQ built-in! Add number entities for control
-```
-
 ### 2. Flash from Home Assistant
-1. Copy example YAML from `examples/` directory
-2. Edit `secrets.yaml` with your wifi and snapserver IP
+1. Copy example YAML from `examples/` directory (or use remote GitHub packages)
+2. Create `secrets.yaml` with your WiFi and Snapserver details
 3. Flash via ESPHome dashboard → Done!
 
-**→ See [examples/](examples/) for complete ready-to-flash configs**
+**→ See [examples/](examples/) for complete ready-to-flash configs**  
+**→ [amped-esp32-s3-plus-example.yaml](examples/amped-esp32-s3-plus-example.yaml)** - Complete example with remote packages
 
 ---
 
@@ -54,9 +64,9 @@ Hardware-only packages for [Sonocotta ESP32 Audio Dock](https://github.com/sonoc
 | Board Family | DAC/Amp | Output | EQ Type | Profiles |
 |--------------|---------|--------|---------|----------|
 | **Amped-ESP32** | PCM5100+TPA3128 | 22W @ 8Ω | Software | esp32, esp32-s3, tpa3110 |
-| **Amped-ESP32-S3-Plus** | PCM5122+TPA3128 | 22W @ 8Ω | Software | **s3-plus** 🆕 |
+| **Amped-ESP32-S3-Plus** 🆕 | PCM5122+TPA3128 | 22W @ 8Ω | Software | **s3-plus** |
 | **Louder-ESP32** | TAS5805M | 25W @ 8Ω | Hardware 15-band | esp32, esp32-s3, mic |
-| **Louder-ESP32-Plus** | TAS5825M | 25W @ 8Ω | Hardware 15-band | **s3-plus** 🆕 |
+| **Louder-ESP32-S3-Plus** 🆕 | TAS5825M | 25W @ 8Ω | Hardware 15-band | **s3-plus** |
 | **HiFi-ESP32** | PCM5100A | Line 2.1V | Software | esp32, esp32-s3, s3-mic |
 | **HiFi-ESP32-Plus** | PCM5122 | Line 2.1V | Software | esp32-plus, s3-plus |
 | **Loud-ESP32** | MAX98357 | 3-5W | Software | esp32, esp32-s3 |
@@ -117,6 +127,133 @@ packages:
 ---
 
 **→ All examples in [examples/](examples/) directory with detailed comments**
+
+---
+
+## 🎛️ Optional Hardware Features (Plus Models)
+
+**Plus models** include additional hardware that can be activated in your config:
+
+| Feature | Plus Models | GPIO | Purpose |
+|---------|-------------|------|---------|
+| **RGB LED** | All Plus | GPIO21 | Status indicator, audio reactive |
+| **IR Receiver** | All Plus | GPIO07 | Remote control input |
+| **OLED Display** | All Plus | SPI | Show IP, stats, playback info |
+| **Ethernet** | All Plus | W5500 | Wired network (lower latency) |
+
+**How to activate:** See [examples/README.md](examples/README.md#-optional-hardware-features-plus-models) for complete instructions with code examples.
+
+---
+
+## 🔧 Important Configuration Notes
+
+### ESP32-S3 Requirements
+
+**ALL ESP32-S3 boards MUST include these settings:**
+
+```yaml
+substitutions:
+  task_stack_in_psram: "true"  # REQUIRED
+
+logger:
+  hardware_uart: USB_SERIAL_JTAG  # REQUIRED for serial output
+
+esp32:
+  framework:
+    sdkconfig_options:
+      CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG: "y"
+      CONFIG_ESP_CONSOLE_SECONDARY_NONE: "y"
+      # ... other ESP32-S3 settings
+```
+
+**Without these:** No serial output, debugging impossible, potential boot issues.
+
+### Software EQ Requirements
+
+When using soft-eq-18band.yaml package:
+
+```yaml
+esp32:
+  framework:
+    sdkconfig_options:
+      CONFIG_USE_DSP_PROCESSOR: "y"
+      CONFIG_DSP_OPTIMIZED: "y"  # ESP32-S3 optimizations
+      CONFIG_DSP_MAX_FFT_SIZE: "4096"
+      CONFIG_SNAPCLIENT_DSP_FLOW_BASS_TREBLE_EQ: "n"  # Use custom EQ
+```
+
+### Network Configuration
+
+**WiFi (recommended for most users):**
+```yaml
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  power_save_mode: none  # CRITICAL for audio!
+  output_power: 20dB     # Maximum signal strength
+```
+
+**Ethernet (Plus models, lower latency):**
+```yaml
+ethernet:
+  type: W5500
+  # ... see examples for full config
+```
+
+### Critical Snapclient Settings
+
+```yaml
+snapclient:
+  hostname: !secret snapserver_host  # Your Snapcast server IP
+  port: 1704
+  name: ${friendly_name}
+  i2s_dout_pin: GPIO16  # ESP32-S3: GPIO16, ESP32: GPIO25
+  audio_dac: pcm5122_dac  # CRITICAL: Link to DAC from board profile
+```
+
+---
+
+## 🐛 Troubleshooting
+
+### No Serial Output (ESP32-S3)
+- ✅ Add `hardware_uart: USB_SERIAL_JTAG` to logger
+- ✅ Add `CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG: "y"` to sdkconfig
+- ✅ Check baud rate: 115200
+- ✅ Verify USB cable supports data (not just power)
+
+### No Audio Output
+- ✅ Verify Snapcast server is running: `systemctl status snapserver`
+- ✅ Check server reachable: `ping 192.168.1.x`
+- ✅ Confirm `audio_dac: pcm5122_dac` in snapclient config
+- ✅ Check DAC enable switch in Home Assistant (should be ON)
+- ✅ Verify amplifier enable switch (if needed)
+
+### WiFi Connection Issues
+- ✅ Use 2.4GHz WiFi only (ESP32-S3 doesn't support 5GHz)
+- ✅ Set `power_save_mode: none`
+- ✅ Check SSID/password in secrets.yaml
+- ✅ Verify WiFi signal strength sensor (should be > -70dBm)
+
+### EQ Not Working
+- ✅ Verify soft-eq-18band.yaml package is included
+- ✅ Check `CONFIG_USE_DSP_PROCESSOR: "y"` in sdkconfig
+- ✅ Look for 18 EQ number entities in Home Assistant
+- ✅ Enable EQ master switch
+
+### High Loop Time / Audio Glitches
+- ✅ Disable `debug:` component (adds overhead)
+- ✅ Set logger `level: INFO` instead of DEBUG
+- ✅ Check Free PSRAM sensor (should be > 7MB)
+- ✅ Verify WiFi signal strength (> -70dBm)
+- ✅ Consider Ethernet for critical installations
+
+### Build/Flash Errors
+- ✅ Use ESPHome 2026.1.0 or newer
+- ✅ Check `min_version: 2025.7.0` in esphome section
+- ✅ Verify all packages exist on correct branch
+- ✅ Clear ESPHome build cache if issues persist
+
+**More help:** Open an issue on GitHub with full log output.
 
 ---
 
