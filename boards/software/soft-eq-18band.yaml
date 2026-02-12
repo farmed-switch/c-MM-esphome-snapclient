@@ -47,6 +47,7 @@ number:
     unit_of_measurement: "dB"
     mode: slider
     restore_value: true
+    optimistic: true
     on_value:
       - lambda: |-
           extern void set_eq_band(int band, float gain_db);
@@ -62,6 +63,7 @@ number:
     unit_of_measurement: "dB"
     mode: slider
     restore_value: true
+    optimistic: true
     on_value:
       - lambda: |-
           extern void set_eq_band(int band, float gain_db);
@@ -77,6 +79,7 @@ number:
     unit_of_measurement: "dB"
     mode: slider
     restore_value: true
+    optimistic: true
     on_value:
       - lambda: |-
           extern void set_eq_band(int band, float gain_db);
@@ -92,6 +95,7 @@ number:
     unit_of_measurement: "dB"
     mode: slider
     restore_value: true
+    optimistic: true
     on_value:
       - lambda: |-
           extern void set_eq_band(int band, float gain_db);
@@ -107,6 +111,7 @@ number:
     unit_of_measurement: "dB"
     mode: slider
     restore_value: true
+    optimistic: true
     on_value:
       - lambda: |-
           extern void set_eq_band(int band, float gain_db);
@@ -122,6 +127,7 @@ number:
     unit_of_measurement: "dB"
     mode: slider
     restore_value: true
+    optimistic: true
     on_value:
       - lambda: |-
           extern void set_eq_band(int band, float gain_db);
@@ -137,6 +143,7 @@ number:
     unit_of_measurement: "dB"
     mode: slider
     restore_value: true
+    optimistic: true
     on_value:
       - lambda: |-
           extern void set_eq_band(int band, float gain_db);
@@ -152,6 +159,7 @@ number:
     unit_of_measurement: "dB"
     mode: slider
     restore_value: true
+    optimistic: true
     on_value:
       - lambda: |-
           extern void set_eq_band(int band, float gain_db);
@@ -167,6 +175,7 @@ number:
     unit_of_measurement: "dB"
     mode: slider
     restore_value: true
+    optimistic: true
     on_value:
       - lambda: |-
           extern void set_eq_band(int band, float gain_db);
@@ -182,6 +191,7 @@ number:
     unit_of_measurement: "dB"
     mode: slider
     restore_value: true
+    optimistic: true
     on_value:
       - lambda: |-
           extern void set_eq_band(int band, float gain_db);
@@ -197,6 +207,7 @@ number:
     unit_of_measurement: "dB"
     mode: slider
     restore_value: true
+    optimistic: true
     on_value:
       - lambda: |-
           extern void set_eq_band(int band, float gain_db);
@@ -212,6 +223,7 @@ number:
     unit_of_measurement: "dB"
     mode: slider
     restore_value: true
+    optimistic: true
     on_value:
       - lambda: |-
           extern void set_eq_band(int band, float gain_db);
@@ -227,6 +239,7 @@ number:
     unit_of_measurement: "dB"
     mode: slider
     restore_value: true
+    optimistic: true
     on_value:
       - lambda: |-
           extern void set_eq_band(int band, float gain_db);
@@ -242,6 +255,7 @@ number:
     unit_of_measurement: "dB"
     mode: slider
     restore_value: true
+    optimistic: true
     on_value:
       - lambda: |-
           extern void set_eq_band(int band, float gain_db);
@@ -257,6 +271,7 @@ number:
     unit_of_measurement: "dB"
     mode: slider
     restore_value: true
+    optimistic: true
     on_value:
       - lambda: |-
           extern void set_eq_band(int band, float gain_db);
@@ -272,6 +287,7 @@ number:
     unit_of_measurement: "dB"
     mode: slider
     restore_value: true
+    optimistic: true
     on_value:
       - lambda: |-
           extern void set_eq_band(int band, float gain_db);
@@ -287,6 +303,7 @@ number:
     unit_of_measurement: "dB"
     mode: slider
     restore_value: true
+    optimistic: true
     on_value:
       - lambda: |-
           extern void set_eq_band(int band, float gain_db);
@@ -302,6 +319,7 @@ number:
     unit_of_measurement: "dB"
     mode: slider
     restore_value: true
+    optimistic: true
     on_value:
       - lambda: |-
           extern void set_eq_band(int band, float gain_db);
