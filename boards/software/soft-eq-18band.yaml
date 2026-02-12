@@ -1,0 +1,329 @@
+# Software 18-Band Graphic Equalizer Package
+# Compatible with ALL boards without hardware DSP
+# (Amped, HiFi, Loud series)
+#
+# Usage in your config:
+#   packages:
+#     board: !include boards/sonocotta/amped-esp32-s3.yaml
+#     soft_eq: !include boards/software/soft-eq-18band.yaml
+#
+# REQUIREMENTS:
+# - Must enable DSP in esp32 framework sdkconfig_options:
+#     CONFIG_SNAPCLIENT_DSP_FLOW_BASS_TREBLE_EQ: "n"
+#     CONFIG_USE_DSP_PROCESSOR: "y"
+#     CONFIG_DSP_OPTIMIZED: "y"
+#     CONFIG_DSP_MAX_FFT_SIZE: "4096"
+#
+# EQ Bands: 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 200, 315, 500, 
+#           800, 1250, 2000, 5000 Hz
+# Range: -15dB to +15dB per band
+# CPU Impact: ~18ms loop time with EQ active (ESP32-S3 @ 240MHz)
+
+# EQ Master Enable Switch
+switch:
+  - platform: template
+    name: "${friendly_name} EQ Enable"
+    id: eq_enable
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+    on_turn_on:
+      - lambda: |-
+          extern void enable_eq(bool enable);
+          enable_eq(true);
+    on_turn_off:
+      - lambda: |-
+          extern void enable_eq(bool enable);
+          enable_eq(false);
+
+# 18-Band EQ Controls
+number:
+  - platform: template
+    name: "${friendly_name} EQ 0040Hz"
+    id: eq_40hz
+    min_value: -15
+    max_value: 15
+    step: 1
+    initial_value: 0
+    unit_of_measurement: "dB"
+    mode: slider
+    restore_value: true
+    on_value:
+      - lambda: |-
+          extern void set_eq_band(int band, float gain_db);
+          set_eq_band(0, x);
+  
+  - platform: template
+    name: "${friendly_name} EQ 0050Hz"
+    id: eq_50hz
+    min_value: -15
+    max_value: 15
+    step: 1
+    initial_value: 0
+    unit_of_measurement: "dB"
+    mode: slider
+    restore_value: true
+    on_value:
+      - lambda: |-
+          extern void set_eq_band(int band, float gain_db);
+          set_eq_band(1, x);
+  
+  - platform: template
+    name: "${friendly_name} EQ 0060Hz"
+    id: eq_60hz
+    min_value: -15
+    max_value: 15
+    step: 1
+    initial_value: 0
+    unit_of_measurement: "dB"
+    mode: slider
+    restore_value: true
+    on_value:
+      - lambda: |-
+          extern void set_eq_band(int band, float gain_db);
+          set_eq_band(2, x);
+  
+  - platform: template
+    name: "${friendly_name} EQ 0070Hz"
+    id: eq_70hz
+    min_value: -15
+    max_value: 15
+    step: 1
+    initial_value: 0
+    unit_of_measurement: "dB"
+    mode: slider
+    restore_value: true
+    on_value:
+      - lambda: |-
+          extern void set_eq_band(int band, float gain_db);
+          set_eq_band(3, x);
+  
+  - platform: template
+    name: "${friendly_name} EQ 0080Hz"
+    id: eq_80hz
+    min_value: -15
+    max_value: 15
+    step: 1
+    initial_value: 0
+    unit_of_measurement: "dB"
+    mode: slider
+    restore_value: true
+    on_value:
+      - lambda: |-
+          extern void set_eq_band(int band, float gain_db);
+          set_eq_band(4, x);
+  
+  - platform: template
+    name: "${friendly_name} EQ 0090Hz"
+    id: eq_90hz
+    min_value: -15
+    max_value: 15
+    step: 1
+    initial_value: 0
+    unit_of_measurement: "dB"
+    mode: slider
+    restore_value: true
+    on_value:
+      - lambda: |-
+          extern void set_eq_band(int band, float gain_db);
+          set_eq_band(5, x);
+  
+  - platform: template
+    name: "${friendly_name} EQ 0100Hz"
+    id: eq_100hz
+    min_value: -15
+    max_value: 15
+    step: 1
+    initial_value: 0
+    unit_of_measurement: "dB"
+    mode: slider
+    restore_value: true
+    on_value:
+      - lambda: |-
+          extern void set_eq_band(int band, float gain_db);
+          set_eq_band(6, x);
+  
+  - platform: template
+    name: "${friendly_name} EQ 0110Hz"
+    id: eq_110hz
+    min_value: -15
+    max_value: 15
+    step: 1
+    initial_value: 0
+    unit_of_measurement: "dB"
+    mode: slider
+    restore_value: true
+    on_value:
+      - lambda: |-
+          extern void set_eq_band(int band, float gain_db);
+          set_eq_band(7, x);
+  
+  - platform: template
+    name: "${friendly_name} EQ 0120Hz"
+    id: eq_120hz
+    min_value: -15
+    max_value: 15
+    step: 1
+    initial_value: 0
+    unit_of_measurement: "dB"
+    mode: slider
+    restore_value: true
+    on_value:
+      - lambda: |-
+          extern void set_eq_band(int band, float gain_db);
+          set_eq_band(8, x);
+  
+  - platform: template
+    name: "${friendly_name} EQ 0130Hz"
+    id: eq_130hz
+    min_value: -15
+    max_value: 15
+    step: 1
+    initial_value: 0
+    unit_of_measurement: "dB"
+    mode: slider
+    restore_value: true
+    on_value:
+      - lambda: |-
+          extern void set_eq_band(int band, float gain_db);
+          set_eq_band(9, x);
+  
+  - platform: template
+    name: "${friendly_name} EQ 0140Hz"
+    id: eq_140hz
+    min_value: -15
+    max_value: 15
+    step: 1
+    initial_value: 0
+    unit_of_measurement: "dB"
+    mode: slider
+    restore_value: true
+    on_value:
+      - lambda: |-
+          extern void set_eq_band(int band, float gain_db);
+          set_eq_band(10, x);
+  
+  - platform: template
+    name: "${friendly_name} EQ 0200Hz"
+    id: eq_200hz
+    min_value: -15
+    max_value: 15
+    step: 1
+    initial_value: 0
+    unit_of_measurement: "dB"
+    mode: slider
+    restore_value: true
+    on_value:
+      - lambda: |-
+          extern void set_eq_band(int band, float gain_db);
+          set_eq_band(11, x);
+  
+  - platform: template
+    name: "${friendly_name} EQ 0315Hz"
+    id: eq_315hz
+    min_value: -15
+    max_value: 15
+    step: 1
+    initial_value: 0
+    unit_of_measurement: "dB"
+    mode: slider
+    restore_value: true
+    on_value:
+      - lambda: |-
+          extern void set_eq_band(int band, float gain_db);
+          set_eq_band(12, x);
+  
+  - platform: template
+    name: "${friendly_name} EQ 0500Hz"
+    id: eq_500hz
+    min_value: -15
+    max_value: 15
+    step: 1
+    initial_value: 0
+    unit_of_measurement: "dB"
+    mode: slider
+    restore_value: true
+    on_value:
+      - lambda: |-
+          extern void set_eq_band(int band, float gain_db);
+          set_eq_band(13, x);
+  
+  - platform: template
+    name: "${friendly_name} EQ 0800Hz"
+    id: eq_800hz
+    min_value: -15
+    max_value: 15
+    step: 1
+    initial_value: 0
+    unit_of_measurement: "dB"
+    mode: slider
+    restore_value: true
+    on_value:
+      - lambda: |-
+          extern void set_eq_band(int band, float gain_db);
+          set_eq_band(14, x);
+  
+  - platform: template
+    name: "${friendly_name} EQ 1250Hz"
+    id: eq_1250hz
+    min_value: -15
+    max_value: 15
+    step: 1
+    initial_value: 0
+    unit_of_measurement: "dB"
+    mode: slider
+    restore_value: true
+    on_value:
+      - lambda: |-
+          extern void set_eq_band(int band, float gain_db);
+          set_eq_band(15, x);
+  
+  - platform: template
+    name: "${friendly_name} EQ 2000Hz"
+    id: eq_2000hz
+    min_value: -15
+    max_value: 15
+    step: 1
+    initial_value: 0
+    unit_of_measurement: "dB"
+    mode: slider
+    restore_value: true
+    on_value:
+      - lambda: |-
+          extern void set_eq_band(int band, float gain_db);
+          set_eq_band(16, x);
+  
+  - platform: template
+    name: "${friendly_name} EQ 5000Hz"
+    id: eq_5000hz
+    min_value: -15
+    max_value: 15
+    step: 1
+    initial_value: 0
+    unit_of_measurement: "dB"
+    mode: slider
+    restore_value: true
+    on_value:
+      - lambda: |-
+          extern void set_eq_band(int band, float gain_db);
+          set_eq_band(17, x);
+
+# EQ Preset Selector
+select:
+  - platform: template
+    name: "${friendly_name} EQ Preset"
+    id: eq_preset
+    options:
+      - "Flat (Bypass)"
+      - "Subwoofer Boost"
+      - "Bookshelf Speakers"
+      - "Floor Standing"
+      - "Near Field Monitors"
+      - "Small/Portable"
+      - "Custom"
+    initial_option: "Flat (Bypass)"
+    restore_value: true
+    optimistic: true
+    on_value:
+      - lambda: |-
+          extern void apply_eq_preset(const char* preset);
+          apply_eq_preset(x.c_str());

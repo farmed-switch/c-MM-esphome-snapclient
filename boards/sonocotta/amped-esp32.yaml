@@ -1,0 +1,55 @@
+# Sonocotta Amped-ESP32 Board Package (Rev H/H1/J with TPA3128)
+# Hardware: PCM5100A DAC + TPA3128 Amplifier (22W @ 8Ω)
+# Compatible: Rev H, H1, J (boards with TPA3128 amp)
+# For Rev G/G1/G2 (TPA3110): Use amped-esp32-tpa3110.yaml
+# NO Hardware DSP - Use boards/software/soft-eq-18band.yaml for equalization
+#
+# Usage in your config:
+#   packages:
+#     board: !include boards/sonocotta/amped-esp32.yaml
+
+substitutions:
+  board_type: "Amped-ESP32"
+  board_revision: "H+"
+  
+  # CRITICAL: Vanilla ESP32 requires false!
+  task_stack_in_psram: "false"
+  
+  # Customizable pins
+  led_pin: "GPIO4"       # Varies: 4 (early), 12 (mid), 21 (late)
+  ir_pin: "GPIO32"       # Default; GPIO35 or GPIO19 on some
+  dac_mute_pin: "GPIO13" # TPA3128 MUTE pin
+
+# ESP32 Hardware Configuration
+esp32:
+  board: esp32dev
+  flash_size: 8MB
+  framework:
+    type: esp-idf
+    version: recommended
+    sdkconfig_options:
+      CONFIG_ESP32_DEFAULT_CPU_FREQ_240: "y"
+      CONFIG_BT_ALLOCATION_FROM_SPIRAM_FIRST: "y"
+      CONFIG_BT_BLE_DYNAMIC_ENV_MEMORY: "y"
+
+# PSRAM Configuration
+psram:
+  mode: quad
+  speed: 40MHz
+  ignore_not_found: false
+
+# I2S Audio Pins
+i2s_audio:
+  i2s_lrclk_pin: GPIO22  # WS
+  i2s_bclk_pin: GPIO26   # BCK
+  # i2s_dout_pin: GPIO25  # Set in main config
+
+# DAC Enable Switch
+switch:
+  - platform: gpio
+    icon: "mdi:speaker"
+    name: "${friendly_name} Enable DAC"
+    id: enable_dac
+    pin:
+      number: ${dac_mute_pin}
+    restore_mode: ALWAYS_OFF

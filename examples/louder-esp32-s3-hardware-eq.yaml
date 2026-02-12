@@ -1,0 +1,123 @@
+# Example: Louder ESP32-S3 with Hardware EQ (TAS5805M)
+# This board has built-in DSP with 15-band hardware EQ
+# NO SOFTWARE EQ NEEDED - uses TAS5805M chip
+#
+# Flash this from ESPHome (Home Assistant or esphome.io)
+
+substitutions:
+  name: snapcast-louder-s3
+  friendly_name: "Snapcast Louder S3"
+
+# Include board package (already has TAS5805M hardware EQ)
+packages:
+  board: !include boards/sonocotta/louder-esp32-s3.yaml
+
+# Application Configuration
+esphome:
+  name: ${name}
+  friendly_name: ${friendly_name}
+  min_version: 2025.7.5
+  name_add_mac_suffix: false
+  platformio_options:
+    board_build.flash_mode: dio
+  on_boot:
+    priority: 600
+    then:
+      - logger.log: "Waiting 30s for network..."
+      - delay: 30s
+      - switch.turn_on: enable_dac
+
+logger:
+  level: DEBUG
+
+# Ethernet (W5500) - more stable than WiFi for audio
+ethernet:
+  type: W5500
+  clk_pin: GPIO12
+  mosi_pin: GPIO11
+  miso_pin: GPIO13
+  cs_pin: GPIO10
+  interrupt_pin: GPIO06
+  reset_pin: GPIO05
+  clock_speed: 20MHz
+
+# Home Assistant API
+api:
+  encryption:
+    key: !secret api_key
+
+# OTA Updates
+ota:
+  - platform: esphome
+    password: !secret ota_password
+
+# Snapclient Component
+external_components:
+  - source: github://farmed-switch/c-MM-esphome-snapclient@main
+    components: [ snapclient ]
+    refresh: 0s
+
+snapclient:
+  hostname: !secret snapserver_ip
+  port: 1704
+  name: ${friendly_name}
+  audio_dac: tas5805m_dac  # Use hardware DAC
+  i2s_dout_pin: GPIO16
+
+# TAS5805M 15-Band Hardware EQ Controls
+# Frequencies: 20, 31.5, 50, 80, 125, 200, 315, 500, 800, 1.25k, 2k, 3.15k, 5k, 8k, 16k Hz
+number:
+  - platform: tas5805m
+    eq_gain_band20Hz:
+      name: "${friendly_name} EQ 20Hz"
+    eq_gain_band31.5Hz:
+      name: "${friendly_name} EQ 31.5Hz"
+    eq_gain_band50Hz:
+      name: "${friendly_name} EQ 50Hz"
+    eq_gain_band80Hz:
+      name: "${friendly_name} EQ 80Hz"
+    eq_gain_band125Hz:
+      name: "${friendly_name} EQ 125Hz"
+    eq_gain_band200Hz:
+      name: "${friendly_name} EQ 200Hz"
+    eq_gain_band315Hz:
+      name: "${friendly_name} EQ 315Hz"
+    eq_gain_band500Hz:
+      name: "${friendly_name} EQ 500Hz"
+    eq_gain_band800Hz:
+      name: "${friendly_name} EQ 800Hz"
+    eq_gain_band1250Hz:
+      name: "${friendly_name} EQ 1.25kHz"
+    eq_gain_band2000Hz:
+      name: "${friendly_name} EQ 2kHz"
+    eq_gain_band3150Hz:
+      name: "${friendly_name} EQ 3.15kHz"
+    eq_gain_band5000Hz:
+      name: "${friendly_name} EQ 5kHz"
+    eq_gain_band8000Hz:
+      name: "${friendly_name} EQ 8kHz"
+    eq_gain_band16000Hz:
+      name: "${friendly_name} EQ 16kHz"
+
+# TAS5805M Fault Monitoring
+binary_sensor:
+  - platform: tas5805m
+    have_fault:
+      name: "${friendly_name} Any Faults"
+    left_channel_dc_fault:
+      name: "${friendly_name} Left DC Fault"
+    right_channel_dc_fault:
+      name: "${friendly_name} Right DC Fault"
+    left_channel_over_current:
+      name: "${friendly_name} Left Over Current"
+    right_channel_over_current:
+      name: "${friendly_name} Right Over Current"
+    clock_fault:
+      name: "${friendly_name} Clock Fault"
+    over_temperature:
+      name: "${friendly_name} Over Temperature"
+
+sensor:
+  - platform: tas5805m
+    faults_cleared:
+      name: "${friendly_name} Faults Cleared"

@@ -1,0 +1,139 @@
+# Sonocotta Louder-ESP32-S3 Board Package (Rev J-J4)
+# Hardware: TAS5805M DAC + Amplifier (25W @ 8Ω) with 15-band hardware EQ
+# Compatible: Rev J, J1, J2, J3, J4 (without mic header)
+# For Rev K0+: Use louder-esp32-s3-mic.yaml
+#
+# Usage in your config:
+#   packages:
+#     board: !include boards/sonocotta/louder-esp32-s3.yaml
+#
+# Then add your application config (wifi, api, snapclient, etc.)
+
+substitutions:
+  # Board identification
+  board_type: "Louder-ESP32-S3"
+  board_revision: "J-J4"
+  
+  # CRITICAL: ESP32-S3 requires PSRAM task stack
+  task_stack_in_psram: "true"
+  
+  # Customizable pins (vary by revision)
+  led_pin: "GPIO21"      # Default for J revisions
+  ir_pin: "GPIO7"        # Standard for all S3
+
+# ESP32-S3 Hardware Configuration
+esp32:
+  board: esp32-s3-devkitc-1
+  variant: ESP32S3
+  flash_size: 8MB
+  framework:
+    type: esp-idf
+    version: recommended
+    sdkconfig_options:
+      CONFIG_ESP32S3_DEFAULT_CPU_FREQ_240: "y"
+      CONFIG_ESP32S3_DATA_CACHE_64KB: "y"
+      CONFIG_ESP32S3_DATA_CACHE_LINE_64B: "y"
+      CONFIG_ESP32S3_INSTRUCTION_CACHE_32KB: "y"
+      CONFIG_ESP32_S3_BOX_BOARD: "y"
+
+# PSRAM Configuration
+psram:
+  mode: octal
+  speed: 80MHz
+  ignore_not_found: false
+
+# I2C for TAS5805M DAC Control
+i2c:
+  sda: GPIO8
+  scl: GPIO9
+  frequency: 400kHz
+  scan: true
+
+# I2S Audio Pins
+i2s_audio:
+  i2s_lrclk_pin: GPIO15  # WS
+  i2s_bclk_pin: GPIO14   # BCK
+  # i2s_dout_pin: GPIO16  # Set this in your main config for snapclient
+
+# TAS5805M DAC Component (Hardware EQ)
+external_components:
+  - source: github://mrtoy-me/esphome-tas5805m@main
+    components: [ tas5805m ]
+    refresh: 60s
+
+# TAS5805M Configuration
+audio_dac:
+  - platform: tas5805m
+    id: tas5805m_dac
+    enable_pin: GPIO17      # PWDN pin (Rev J-J4)
+    dac_mode: BTL           # BTL (stereo) or PBTL (mono bridged)
+    mixer_mode: STEREO      # STEREO, STEREO_INVERSE, MONO, LEFT, RIGHT
+    analog_gain_left_db: 0
+    analog_gain_right_db: 0
+    volume_max: -1dB
+    volume_min: -60dB
+    refresh_eq: BY_SWITCH
+    update_interval: 10s
+    # 15-band EQ configuration available - see TAS5805M component docs
+
+# Board-specific switches
+switch:
+  - platform: tas5805m
+    enable_dac:
+      name: "${friendly_name} Enable DAC"
+      id: enable_dac
+      restore_mode: ALWAYS_OFF
+    enable_eq:
+      name: "${friendly_name} Enable EQ"
+      id: enable_eq
+      restore_mode: ALWAYS_OFF
+
+# Optional: RGB LED (varies by revision)
+# Uncomment to enable:
+# light:
+#   - platform: esp32_rmt_led_strip
+#     id: rgb_front_led
+#     name: "${friendly_name} LED"
+#     rgb_order: GRB
+#     pin: ${led_pin}
+#     num_leds: 1
+#     chipset: ws2812
+#     default_transition_length: 0s
+
+# Optional: IR receiver
+# Uncomment to enable:
+# remote_receiver:
+#   pin: 
+#     number: ${ir_pin}
+#     inverted: true
+#     mode:
+#       input: true
+#   dump: all
+
+# TAS5805M Fault Monitoring (Optional - Uncomment to enable)
+# binary_sensor:
+#   - platform: tas5805m
+#     have_fault:
+#       name: "${friendly_name} Any Faults"
+#     left_channel_dc_fault:
+#       name: "${friendly_name} Left DC Fault"
+#     right_channel_dc_fault:
+#       name: "${friendly_name} Right DC Fault"
+#     left_channel_over_current:
+#       name: "${friendly_name} Left Over Current"
+#     right_channel_over_current:
+#       name: "${friendly_name} Right Over Current"
+#     clock_fault:
+#       name: "${friendly_name} Clock Fault"
+#     over_temperature:
+#       name: "${friendly_name} Over Temperature"
+
+# TAS5805M 15-Band Hardware EQ (Optional - Uncomment to enable)
+# Frequencies: 20, 31.5, 50, 80, 125, 200, 315, 500, 800, 1.25k, 2k, 3.15k, 5k, 8k, 16k Hz
+# number:
+#   - platform: tas5805m
+#     eq_gain_band20Hz:
+#       name: "${friendly_name} EQ 20Hz"
+#     eq_gain_band31.5Hz:
+#       name: "${friendly_name} EQ 31.5Hz"
+#     # ... continue for all 15 bands

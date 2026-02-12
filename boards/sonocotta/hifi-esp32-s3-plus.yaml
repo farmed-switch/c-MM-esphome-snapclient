@@ -1,0 +1,71 @@
+# Sonocotta HiFi-ESP32-S3-Plus Hardware Profile
+# PCM5122 DAC with 6-band biquad filters - Line-level output 2.1V
+# https://github.com/sonocotta/esp32-audio-dock
+#
+# ⚠️ This package contains ONLY hardware-specific settings.
+# Add application logic (LED, IR, switches, EQ) in your main config.
+#
+# Compatible with: HiFi-ESP32-S3-Plus (all revisions)
+# Hardware: PCM5122 DAC with I2C control for DSP configuration
+# Revision notes:
+#   - LED: GPIO21 (default for most revisions)
+#   - IR: GPIO7 (all S3 revisions)
+#   - I2C required for PCM5122 control (SDA: GPIO8, SCL: GPIO9)
+#
+# NOTE: PCM5122 ESPHome component is still in development
+# Component: github://sonocotta/esphome-pcm5122
+
+substitutions:
+  board_type: "HiFi-ESP32-S3-Plus"
+  task_stack_in_psram: "true"  # ESP32-S3 requires true
+  
+  # Hardware pins:
+  led_pin: "GPIO21"      # Standard for most revisions
+  ir_pin: "GPIO7"        # Standard for all S3 revisions
+
+esp32:
+  board: esp32-s3-devkitc-1
+  variant: ESP32S3
+  flash_size: 8MB
+  framework:
+    type: esp-idf
+    version: recommended
+    sdkconfig_options:
+      CONFIG_ESP32S3_DEFAULT_CPU_FREQ_240: "y"
+      CONFIG_ESP32S3_DATA_CACHE_64KB: "y"
+      CONFIG_ESP32S3_DATA_CACHE_LINE_64B: "y"
+      CONFIG_ESP32S3_INSTRUCTION_CACHE_32KB: "y"
+      CONFIG_ESP32_S3_BOX_BOARD: "y"
+      CONFIG_BT_ALLOCATION_FROM_SPIRAM_FIRST: "y"
+      CONFIG_BT_BLE_DYNAMIC_ENV_MEMORY: "y"
+      CONFIG_MBEDTLS_EXTERNAL_MEM_ALLOC: "y"
+      CONFIG_MBEDTLS_SSL_PROTO_TLS1_3: "y"
+
+psram:
+  mode: octal
+  speed: 80MHz
+  ignore_not_found: false
+
+# I2C Configuration for PCM5122
+i2c:
+  sda: GPIO8
+  scl: GPIO9
+  frequency: 400kHz
+  scan: true
+
+# I2S Audio Configuration
+i2s_audio:
+  i2s_lrclk_pin: GPIO15  # WS
+  i2s_bclk_pin: GPIO14   # BCK
+
+# PCM5122 DAC Configuration
+# NOTE: Component still in development - check https://github.com/sonocotta/esphome-pcm5122
+# Uncomment when component is ready:
+# external_components:
+#   - source: github://sonocotta/esphome-pcm5122@main
+#     components: [ pcm5122 ]
+#     refresh: 60s
+#
+# audio_dac:
+#   - platform: pcm5122
+#     id: pcm5122_dac

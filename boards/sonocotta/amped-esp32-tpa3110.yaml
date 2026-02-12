@@ -1,0 +1,40 @@
+# Sonocotta Amped-ESP32-TPA3110 Hardware Profile
+# PCM5100A DAC + TPA3110 Amplifier (15W @ 8Ω per channel)
+# https://github.com/sonocotta/esp32-audio-dock
+#
+# ⚠️ This package contains ONLY hardware-specific settings.
+# Add application logic (LED, IR, switches, EQ) in your main config.
+#
+# Compatible with: Rev G, G1, G2 (older boards with TPA3110 amp)
+# For Rev H+ (TPA3128 amp): Use amped-esp32.yaml instead
+# Revision notes:
+#   - Rev G: LED on GPIO4
+#   - Rev G1/G2: LED on GPIO12
+#   - IR varies by revision
+#   - TPA3110 does NOT have MUTE pin (uses SD pin)
+
+substitutions:
+  board_type: "Amped-ESP32-TPA3110"
+  board_revision: "G"  # G, G1, or G2
+  task_stack_in_psram: "false"  # CRITICAL for vanilla ESP32!
+  
+  # Hardware pins:
+  led_pin: "GPIO12"      # Default for Rev G1/G2; Rev G: GPIO4
+  ir_pin: "GPIO35"       # Default; some revisions use GPIO19
+
+esp32:
+  board: esp32dev
+  flash_size: 8MB
+  framework:
+    type: esp-idf
+    version: recommended
+    sdkconfig_options:
+      CONFIG_ESP32_DEFAULT_CPU_FREQ_240: "y"
+      CONFIG_FREERTOS_HZ: "1000"
+      CONFIG_ESP32_SPIRAM_SUPPORT: "n"
+
+# I2S Audio Configuration
+i2s_audio:
+  i2s_lrclk_pin: GPIO25  # WS
+  i2s_bclk_pin: GPIO26   # BCK
+  i2s_mclk_pin: GPIO0    # MCLK

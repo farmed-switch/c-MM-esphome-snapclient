@@ -1,0 +1,79 @@
+# Sonocotta Louder-ESP32-S3-Mic Hardware Profile
+# TAS5805M DAC + Amplifier (25W @ 8Ω) with 15-band EQ + Microphone Header
+# https://github.com/sonocotta/esp32-audio-dock
+#
+# ⚠️ This package contains ONLY hardware-specific settings.
+# Add application logic (LED, IR, switches, EQ bands, fault monitoring) in your main config.
+#
+# Compatible with: Rev K0, K1 (ESP32-S3 with mic header support)
+# For Rev J-J4 (without mic): Use louder-esp32-s3.yaml
+# Revision notes:
+#   - LED: GPIO21 (standard for K0/K1)
+#   - IR: GPIO7 (all S3 revisions)
+#   - PWDN: GPIO17 (all S3 revisions)
+#   - Mic pins: WS=GPIO17, BCK=GPIO18, DIN=GPIO8
+#   - WARNING: GPIO8 shared with I2C SDA, GPIO17 shared with PWDN - pin conflicts possible
+
+substitutions:
+  board_type: "Louder-ESP32-S3-Mic"
+  board_revision: "K0/K1"
+  task_stack_in_psram: "true"  # ESP32-S3 requires true
+  
+  # Hardware pins:
+  tas5805m_enable_pin: "GPIO17"  # PWDN pin (shared with mic WS!)
+  led_pin: "GPIO21"              # Standard for K revisions
+  ir_pin: "GPIO7"                # Standard for all S3 revisions
+  mic_ws_pin: "GPIO17"           # Mic WS (conflicts with PWDN!)
+  mic_bck_pin: "GPIO18"          # Mic BCK
+  mic_din_pin: "GPIO8"           # Mic data input (conflicts with I2C SDA!)
+
+esp32:
+  board: esp32-s3-devkitc-1
+  variant: ESP32S3
+  flash_size: 8MB
+  framework:
+    type: esp-idf
+    version: recommended
+    sdkconfig_options:
+      CONFIG_ESP32S3_DEFAULT_CPU_FREQ_240: "y"
+      CONFIG_ESP32S3_DATA_CACHE_64KB: "y"
+      CONFIG_ESP32S3_DATA_CACHE_LINE_64B: "y"
+      CONFIG_ESP32S3_INSTRUCTION_CACHE_32KB: "y"
+      CONFIG_ESP32_S3_BOX_BOARD: "y"
+      CONFIG_BT_ALLOCATION_FROM_SPIRAM_FIRST: "y"
+      CONFIG_BT_BLE_DYNAMIC_ENV_MEMORY: "y"
+      CONFIG_MBEDTLS_EXTERNAL_MEM_ALLOC: "y"
+      CONFIG_MBEDTLS_SSL_PROTO_TLS1_3: "y"
+
+psram:
+  mode: octal
+  speed: 80MHz
+  ignore_not_found: false
+
+# I2C Configuration for TAS5805M
+# NOTE: GPIO8 shared with mic data on K0+ - be careful with I2C/mic conflicts
+i2c:
+  sda: GPIO8
+  scl: GPIO9
+  frequency: 400kHz
+  scan: true
+
+# I2S Audio Configuration (Speaker output)
+i2s_audio:
+  i2s_lrclk_pin: GPIO15  # WS
+  i2s_bclk_pin: GPIO14   # BCK
+
+# TAS5805M DAC Hardware Configuration
+external_components:
+  - source: github://mrtoy-me/esphome-tas5805m@main
+    components: [ tas5805m ]
+    refresh: 60s
+
+audio_dac:
+  - platform: tas5805m
+    id: tas5805m_dac
+    enable_pin: ${tas5805m_enable_pin}
+    dac_mode: BTL           # BTL (stereo) or PBTL (mono bridged)
+    mixer_mode: STEREO      # STEREO, STEREO_INVERSE, MONO, LEFT, RIGHT
+    analog_gain_left_db: 0
+    analog_gain_right_db: 0

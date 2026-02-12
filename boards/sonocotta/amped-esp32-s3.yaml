@@ -1,0 +1,94 @@
+# Sonocotta Amped-ESP32-S3 Board Package (Rev J with TPA3128)
+# Hardware: PCM5100A DAC + TPA3128 Amplifier (22W @ 8Ω)
+# Compatible: Rev J and later (all S3 variants use TPA3128)
+# NO Hardware DSP - Use boards/software/soft-eq-18band.yaml for equalization
+#
+# Usage in your config:
+#   packages:
+#     board: !include boards/sonocotta/amped-esp32-s3.yaml
+#
+# Then add your application config (wifi, api, snapclient, SOFTWARE EQ, etc.)
+
+substitutions:
+  # Board identification
+  board_type: "Amped-ESP32-S3"
+  board_revision: "J+"
+  
+  # CRITICAL: ESP32-S3 requires PSRAM task stack
+  task_stack_in_psram: "true"
+  
+  # Customizable pins (vary by revision)
+  led_pin: "GPIO9"       # Default; some revisions use GPIO21 or GPIO27
+  ir_pin: "GPIO7"        # Standard for all S3
+  dac_mute_pin: "GPIO17" # TPA3128 MUTE pin
+
+# ESP32-S3 Hardware Configuration
+esp32:
+  board: esp32-s3-devkitc-1
+  variant: ESP32S3
+  flash_size: 8MB
+  framework:
+    type: esp-idf
+    version: recommended
+    sdkconfig_options:
+      # Standard S3 optimizations
+      CONFIG_ESP32S3_DEFAULT_CPU_FREQ_240: "y"
+      CONFIG_ESP32S3_DATA_CACHE_64KB: "y"
+      CONFIG_ESP32S3_DATA_CACHE_LINE_64B: "y"
+      CONFIG_ESP32S3_INSTRUCTION_CACHE_32KB: "y"
+      CONFIG_ESP32_S3_BOX_BOARD: "y"
+
+# PSRAM Configuration
+psram:
+  mode: octal
+  speed: 80MHz
+  ignore_not_found: false
+
+# I2S Audio Pins
+i2s_audio:
+  i2s_lrclk_pin: GPIO15  # WS
+  i2s_bclk_pin: GPIO14   # BCK
+  # i2s_dout_pin: GPIO16  # Set this in your main config for snapclient
+
+# DAC Enable Switch (TPA3128 MUTE control)
+switch:
+  - platform: gpio
+    icon: "mdi:speaker"
+    name: "${friendly_name} Enable DAC"
+    id: enable_dac
+    pin:
+      number: ${dac_mute_pin}
+    restore_mode: ALWAYS_OFF
+
+# Optional: RGB LED (varies by revision)
+# Uncomment to enable:
+# light:
+#   - platform: esp32_rmt_led_strip
+#     id: rgb_front_led
+#     name: "${friendly_name} LED"
+#     rgb_order: GRB
+#     pin: ${led_pin}
+#     num_leds: 1
+#     chipset: ws2812
+#     default_transition_length: 0s
+
+# Optional: IR receiver (varies by revision)
+# Uncomment to enable:
+# remote_receiver:
+#   pin: 
+#     number: ${ir_pin}
+#     inverted: true
+#     mode:
+#       input: true
+#   dump: all
+
+# Optional: Ethernet (W5500)
+# Uncomment to enable:
+# ethernet:
+#   type: W5500
+#   clk_pin: GPIO18
+#   mosi_pin: GPIO23
+#   miso_pin: GPIO19
+#   cs_pin: GPIO33
+#   interrupt_pin: GPIO34
+#   reset_pin: GPIO14

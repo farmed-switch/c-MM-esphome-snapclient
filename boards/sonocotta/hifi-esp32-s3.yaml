@@ -1,0 +1,51 @@
+# Sonocotta HiFi-ESP32-S3 Board Package (PCM5100A)
+# Hardware: PCM5100A DAC - Line-level output 2.1V (non-amplified)
+# Compatible: Rev G/G1 (without mic header)
+# For Rev G2+: Use hifi-esp32-s3-mic.yaml
+#
+# ⚠️ NO Hardware DSP - Use boards/software/soft-eq-18band.yaml
+# ⚠️ Line-level output - Requires external amplifier
+#
+# Usage in your config:
+#   packages:
+#     board: !include boards/sonocotta/hifi-esp32-s3.yaml
+
+substitutions:
+  board_type: "HiFi-ESP32-S3"
+  board_revision: "G/G1"
+  
+  # CRITICAL: ESP32-S3 requires true
+  task_stack_in_psram: "true"
+  
+  # Customizable pins
+  led_pin: "GPIO9"       # Standard for most revisions
+  ir_pin: "GPIO7"        # Standard for all S3
+
+# ESP32-S3 Hardware Configuration
+esp32:
+  board: esp32-s3-devkitc-1
+  variant: ESP32S3
+  flash_size: 8MB
+  framework:
+    type: esp-idf
+    version: recommended
+    sdkconfig_options:
+      CONFIG_ESP32S3_DEFAULT_CPU_FREQ_240: "y"
+      CONFIG_ESP32S3_DATA_CACHE_64KB: "y"
+      CONFIG_ESP32S3_DATA_CACHE_LINE_64B: "y"
+      CONFIG_ESP32S3_INSTRUCTION_CACHE_32KB: "y"
+      CONFIG_ESP32_S3_BOX_BOARD: "y"
+
+# PSRAM Configuration
+psram:
+  mode: octal
+  speed: 80MHz
+  ignore_not_found: false
+
+# I2S Audio Pins
+i2s_audio:
+  i2s_lrclk_pin: GPIO15  # WS
+  i2s_bclk_pin: GPIO14   # BCK
+  # i2s_dout_pin: GPIO16  # Set in main config
+
+# No enable pin needed for PCM5100A (always on)

@@ -1,0 +1,65 @@
+# Sonocotta HiFi-ESP32-Plus Hardware Profile
+# PCM5122 DAC with 6-band biquad filters - Line-level output 2.1V
+# https://github.com/sonocotta/esp32-audio-dock
+#
+# ⚠️ This package contains ONLY hardware-specific settings.
+# Add application logic (LED, IR, switches, EQ) in your main config.
+#
+# Compatible with: HiFi-ESP32-Plus (all revisions)
+# Hardware: PCM5122 DAC with I2C control for DSP configuration
+# Revision notes:
+#   - LED: Varies by revision (default GPIO21)
+#   - IR: Varies by revision (default GPIO35)
+#   - I2C required for PCM5122 control (SDA: GPIO16, SCL: GPIO1)
+#
+# NOTE: PCM5122 ESPHome component is still in development
+# Component: github://sonocotta/esphome-pcm5122
+
+substitutions:
+  board_type: "HiFi-ESP32-Plus"
+  task_stack_in_psram: "false"  # ESP32 requires false
+  
+  # Hardware pins:
+  led_pin: "GPIO21"      # Varies by revision
+  ir_pin: "GPIO35"       # Varies by revision
+
+esp32:
+  board: esp32dev
+  flash_size: 8MB
+  framework:
+    type: esp-idf
+    version: recommended
+    sdkconfig_options:
+      CONFIG_BT_ALLOCATION_FROM_SPIRAM_FIRST: "y"
+      CONFIG_BT_BLE_DYNAMIC_ENV_MEMORY: "y"
+      CONFIG_MBEDTLS_EXTERNAL_MEM_ALLOC: "y"
+      CONFIG_MBEDTLS_SSL_PROTO_TLS1_3: "y"
+
+psram:
+  mode: quad
+  speed: 40MHz
+  ignore_not_found: false
+
+# I2C Configuration for PCM5122
+i2c:
+  sda: GPIO16
+  scl: GPIO1
+  frequency: 400kHz
+  scan: true
+
+# I2S Audio Configuration
+i2s_audio:
+  i2s_lrclk_pin: GPIO22  # WS
+  i2s_bclk_pin: GPIO26   # BCK
+
+# PCM5122 DAC Configuration
+# NOTE: Component still in development - check https://github.com/sonocotta/esphome-pcm5122
+# Uncomment when component is ready:
+# external_components:
+#   - source: github://sonocotta/esphome-pcm5122@main
+#     components: [ pcm5122 ]
+#     refresh: 60s
+#
+# audio_dac:
+#   - platform: pcm5122
+#     id: pcm5122_dac

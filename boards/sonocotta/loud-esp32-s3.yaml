@@ -1,0 +1,57 @@
+# Sonocotta Loud-ESP32-S3 Board Package
+# Hardware: Dual MAX98357 DAC - 3-5W per channel (direct speaker output)
+# Compatible: All ESP32-S3 revisions
+# NO Hardware DSP - Use boards/software/soft-eq-18band.yaml
+# USB-C powered (5V) - Direct speaker connection
+#
+# Usage in your config:
+#   packages:
+#     board: !include boards/sonocotta/loud-esp32-s3.yaml
+
+substitutions:
+  board_type: "Loud-ESP32-S3"
+  
+  # CRITICAL: ESP32-S3 requires true
+  task_stack_in_psram: "true"
+  
+  # Customizable pins
+  led_pin: "GPIO9"       # Standard for most revisions
+  ir_pin: "GPIO7"        # Standard for all S3
+  dac_enable_pin: "GPIO8" # MAX98357 enable
+
+# ESP32-S3 Hardware Configuration
+esp32:
+  board: esp32-s3-devkitc-1
+  variant: ESP32S3
+  flash_size: 8MB
+  framework:
+    type: esp-idf
+    version: recommended
+    sdkconfig_options:
+      CONFIG_ESP32S3_DEFAULT_CPU_FREQ_240: "y"
+      CONFIG_ESP32S3_DATA_CACHE_64KB: "y"
+      CONFIG_ESP32S3_DATA_CACHE_LINE_64B: "y"
+      CONFIG_ESP32S3_INSTRUCTION_CACHE_32KB: "y"
+      CONFIG_ESP32_S3_BOX_BOARD: "y"
+
+# PSRAM Configuration
+psram:
+  mode: octal
+  speed: 80MHz
+  ignore_not_found: false
+
+# I2S Audio Pins
+i2s_audio:
+  i2s_lrclk_pin: GPIO15  # WS
+  i2s_bclk_pin: GPIO14   # BCK
+  # i2s_dout_pin: GPIO16  # Set in main config
+
+# DAC Enable Switch (MAX98357)
+switch:
+  - platform: gpio
+    icon: "mdi:speaker"
+    name: "${friendly_name} Enable DAC"
+    id: enable_dac
+    pin:
+      number: ${dac_enable_pin}
+    restore_mode: ALWAYS_OFF
