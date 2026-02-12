@@ -54,9 +54,14 @@ Hardware-only packages for [Sonocotta ESP32 Audio Dock](https://github.com/sonoc
 | Board Family | DAC/Amp | Output | EQ Type | Profiles |
 |--------------|---------|--------|---------|----------|
 | **Amped-ESP32** | PCM5100+TPA3128 | 22W @ 8Ω | Software | esp32, esp32-s3, tpa3110 |
+| **Amped-ESP32-S3-Plus** | PCM5122+TPA3128 | 22W @ 8Ω | Software | **s3-plus** 🆕 |
 | **Louder-ESP32** | TAS5805M | 25W @ 8Ω | Hardware 15-band | esp32, esp32-s3, mic |
+| **Louder-ESP32-Plus** | TAS5825M | 25W @ 8Ω | Hardware 15-band | **s3-plus** 🆕 |
 | **HiFi-ESP32** | PCM5100A | Line 2.1V | Software | esp32, esp32-s3, s3-mic |
+| **HiFi-ESP32-Plus** | PCM5122 | Line 2.1V | Software | esp32-plus, s3-plus |
 | **Loud-ESP32** | MAX98357 | 3-5W | Software | esp32, esp32-s3 |
+
+🆕 = Newly added Plus models with OLED display, RGB LED, IR receiver, Ethernet (W5500)
 
 **→ [Full board selection guide](boards/sonocotta/README.md)**  
 **→ [Hardware revision identification](boards/sonocotta/REVISIONS.md)**  

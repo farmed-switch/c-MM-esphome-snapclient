@@ -1,0 +1,182 @@
+# ============================================================
+# Amped ESP32-S3 Plus - Board Profile (Hardware Only)
+# ============================================================
+# Board: Sonocotta Amped-ESP32-S3-Plus (Rev. K+)
+# DAC: PCM5122 (I2C controlled, 24-bit 192kHz)
+# Amp: TPA3128 (22W @ 8Ω)
+# Features: OLED display, RGB LED, IR receiver, Ethernet option
+# 
+# Hardware differences from standard Amped-ESP32-S3:
+# - I2C-controlled PCM5122 DAC instead of PCM5100A
+# - Additional I2C pins for DAC control
+# - RGB LED (GPIO21)
+# - IR Receiver (GPIO07)
+# - SPI display support
+# - Ethernet (W5500) option
+# ============================================================
+
+substitutions:
+  # I2C pins (for PCM5122 DAC control)
+  i2c_sda_pin: GPIO18
+  i2c_scl_pin: GPIO8
+  
+  # I2S audio pins
+  i2s_lrclk_pin: GPIO15
+  i2s_bclk_pin: GPIO14
+  i2s_dout_pin: GPIO16
+  
+  # Amplifier control
+  amp_enable_pin: GPIO17
+  
+  # RGB LED
+  rgb_led_pin: GPIO21
+  
+  # IR receiver
+  ir_rx_pin: GPIO07
+  
+  # SPI pins (for optional OLED display)
+  spi_clk_pin: GPIO12
+  spi_mosi_pin: GPIO11
+  spi_miso_pin: GPIO13
+  
+  # Display control pins
+  display_cs_pin: GPIO47
+  display_dc_pin: GPIO38
+  display_reset_pin: GPIO48
+  
+  # Ethernet pins (optional W5500)
+  eth_cs_pin: GPIO10
+  eth_interrupt_pin: GPIO6
+  eth_reset_pin: GPIO5
+  
+  # PCM5122 DAC I2C address
+  dac_i2c_address: "0x4D"
+
+esphome:
+  platformio_options:
+    board_build.flash_mode: dio
+
+esp32:
+  board: esp32-s3-devkitc-1
+  variant: ESP32S3
+  flash_size: 8MB
+  cpu_frequency: 240MHz
+  framework:
+    type: esp-idf
+    version: recommended
+    sdkconfig_options:
+      CONFIG_ESP32S3_DATA_CACHE_64KB: "y"
+      CONFIG_ESP32S3_DATA_CACHE_LINE_64B: "y"
+      CONFIG_ESP32S3_INSTRUCTION_CACHE_32KB: "y"
+      CONFIG_ESP32_S3_BOX_BOARD: "y"
+      CONFIG_BT_ALLOCATION_FROM_SPIRAM_FIRST: "y"
+      CONFIG_BT_BLE_DYNAMIC_ENV_MEMORY: "y"
+      CONFIG_MBEDTLS_EXTERNAL_MEM_ALLOC: "y"
+      CONFIG_MBEDTLS_SSL_PROTO_TLS1_3: "y"
+
+psram:
+  mode: octal
+  speed: 80MHz
+
+debug:
+  update_interval: 5s
+
+# I2C for PCM5122 DAC control
+i2c:
+  sda: ${i2c_sda_pin}
+  scl: ${i2c_scl_pin}
+  frequency: 400kHz
+  scan: true
+  timeout: 100us
+
+# External component for PCM5122 DAC
+external_components:
+  - source: github://sonocotta/esphome-pcm5122
+    components: [ pcm5122 ]
+    refresh: 24h
+
+# PCM5122 DAC configuration
+audio_dac:
+  - platform: pcm5122
+    id: pcm5122_dac
+    address: ${dac_i2c_address}
+    volume_max: 0dB       # Can go up to +24dB
+    volume_min: -60dB     # Can go down to -103dB
+    analog_gain: -6dB     # -6dB = 1V RMS output, 0dB = 2V RMS output
+    mixer_mode: STEREO    # Options: STEREO, STEREO_INVERSE, LEFT, RIGHT
+
+# I2S audio interface
+i2s_audio:
+  i2s_lrclk_pin: ${i2s_lrclk_pin}
+  i2s_bclk_pin: ${i2s_bclk_pin}
+
+# DAC and Amplifier control switches
+switch:
+  - platform: pcm5122
+    enable_dac:
+      name: "Enable DAC"
+      id: enable_dac
+      restore_mode: ALWAYS_ON
+  
+  - platform: gpio
+    icon: "mdi:speaker"
+    name: "Enable AMP"
+    id: enable_amp
+    pin:
+      number: ${amp_enable_pin}
+    restore_mode: ALWAYS_OFF
+
+# Optional: RGB LED (uncomment if installed)
+# light:
+#   - platform: esp32_rmt_led_strip
+#     id: rgb_front_led
+#     name: "${friendly_name} LED"
+#     rgb_order: GRB
+#     pin: ${rgb_led_pin}
+#     num_leds: 1
+#     chipset: ws2812
+#     default_transition_length: 0s
+
+# Optional: IR Receiver (uncomment if installed)
+# remote_receiver:
+#   pin: 
+#     number: ${ir_rx_pin}
+#     inverted: true
+#     mode:
+#       input: true
+#   dump: all
+
+# Optional: SPI for OLED display (uncomment if installed)
+# spi:
+#   clk_pin: ${spi_clk_pin}
+#   mosi_pin: ${spi_mosi_pin}
+#   miso_pin: ${spi_miso_pin}
+
+# ============================================================
+# NOTES FOR SNAPCLIENT INTEGRATION:
+# ============================================================
+# When using with snapclient, configure speaker with:
+#
+# speaker:
+#   - platform: i2s_audio
+#     id: speaker_id
+#     dac_type: external
+#     i2s_dout_pin: ${i2s_dout_pin}
+#     audio_dac: pcm5122_dac
+#     channel: stereo
+#     sample_rate: 48000
+#
+# Or for direct snapclient integration:
+#
+# snapclient:
+#   hostname: your.server.ip
+#   port: 1704
+#   name: ${friendly_name}
+#   i2s_dout_pin: ${i2s_dout_pin}
+#   audio_dac: pcm5122_dac
+# ============================================================
+# SOFTWARE EQ COMPATIBILITY:
+# - PCM5122 has NO hardware DSP
+# - Compatible with boards/software/soft-eq-18band.yaml
+# - CPU overhead: ~18ms @ 240MHz with 18-band EQ
+# ============================================================

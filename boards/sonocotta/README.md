@@ -29,11 +29,12 @@ Designade av Artem Sokolov (sonocotta) - professionella ESP32 audio boards.
 
 | Board | DAC | Output | Power | DSP/EQ | Profiles Available |
 |-------|-----|--------|-------|--------|-------------------|
-| **HiFi-ESP32** | PCM5100A | Line 2.1V | - | ❌ | esp32, esp32-s3, s3-mic |
-| **HiFi-ESP32-Plus** | PCM5122 | Line 2.1V | - | ✅ 6-BQ | esp32-plus, s3-plus 🚧 |
+| **HiFi-ESP32** | PCM5100A | Line 2.1V | - | ❌ | esp32, esp32-s3, s3-mic, esp32-plus, s3-plus |
 | **Loud-ESP32** | MAX98357 | 3-5W @ 4Ω | USB-C | ❌ | esp32, esp32-s3 |
 | **Louder-ESP32** | TAS5805M | 25W @ 8Ω | 26V | ✅ 15-band | esp32, esp32-mic, s3, s3-mic |
+| **Louder-ESP32-Plus** | TAS5825M | 25W @ 8Ω | 26V | ✅ 15-band | **s3-plus** (NEW!) |
 | **Amped-ESP32** | PCM5100+TPA | 22W @ 8Ω | 26V | ❌ | esp32, tpa3110, esp32-s3 |
+| **Amped-ESP32-S3-Plus** | PCM5122+TPA | 22W @ 8Ω | 26V | ❌ | **s3-plus** (NEW!) |
 
 🚧 = Component under development by sonocotta
 
@@ -45,19 +46,21 @@ Designade av Artem Sokolov (sonocotta) - professionella ESP32 audio boards.
 - ✅ `amped-esp32.yaml` - Rev H/H1/J (TPA3128 with MUTE pin)
 - ✅ `amped-esp32-tpa3110.yaml` - Rev G/G1/G2 (older TPA3110 amp)
 - ✅ `amped-esp32-s3.yaml` - All S3 revisions (Rev J+)
+- ✅ `amped-esp32-s3-plus.yaml` - **NEW!** ESP32-S3 Plus (PCM5122 DAC, OLED, RGB LED, IR receiver)
 
 **Louder-ESP32:**
 - ✅ `louder-esp32.yaml` - Rev H through H5
 - ✅ `louder-esp32-mic.yaml` - Rev H6 (with mic header)
 - ✅ `louder-esp32-s3.yaml` - Rev J through J4
 - ✅ `louder-esp32-s3-mic.yaml` - Rev K0/K1 (with mic header)
+- ✅ `louder-esp32-s3-plus.yaml` - **NEW!** ESP32-S3 with TAS5825M DAC (OLED, RGB, IR, Ethernet)
 
 **HiFi-ESP32:**
 - ✅ `hifi-esp32.yaml` - All ESP32 revisions (PCM5100A)
 - ✅ `hifi-esp32-s3.yaml` - Rev G/G1 (PCM5100A)
 - ✅ `hifi-esp32-s3-mic.yaml` - Rev G2+ (with mic header)
-- 🚧 `hifi-esp32-plus.yaml` - PCM5122 with DSP
-- 🚧 `hifi-esp32-s3-plus.yaml` - PCM5122 S3 with DSP
+- ✅ `hifi-esp32-plus.yaml` - ESP32 with PCM5122
+- ✅ `hifi-esp32-s3-plus.yaml` - ESP32-S3 with PCM5122
 
 **Loud-ESP32:**
 - ✅ `loud-esp32.yaml` - All ESP32 revisions
